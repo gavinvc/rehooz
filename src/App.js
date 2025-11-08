@@ -3,21 +3,18 @@ import './App.css';
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div className="App-container">
+      <div className="App">
+        <header className="App-header"/>
+        <div className="App-body">
+            <h1>Welcome to Rehooz</h1>
+            <p>Your platform for seamless home management.</p>
+        </div>
+        <footer className="App-footer">
+            <h5>This site is created as part of CS 4750 at the University of Virginia</h5>
+            <p>Created by Gavin Crigger, Caitlin Fram, Zara Masood, and Karina Yakubisin</p>
+        </footer>
+      </div>
     </div>
   );
 }
