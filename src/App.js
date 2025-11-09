@@ -4,8 +4,8 @@ import './App.css';
 
 import Home from './pages/Home';
 import Profile from './pages/Profile';
-import MyListings from './pages/MyListings';
-import MyOffers from './pages/MyOffers';
+import Listings from './pages/Listings';
+import Offers from './pages/Offers';
 import Browse from './pages/Browse';
 import Login from './pages/login';   
 
@@ -50,8 +50,8 @@ function App() {
             {/* Protect all other routes */}
             <Route path="/home" element={<PrivateRoute><Home /></PrivateRoute>} />
             <Route path="/profile" element={<PrivateRoute><Profile /></PrivateRoute>} />
-            <Route path="/listings" element={<PrivateRoute><MyListings /></PrivateRoute>} />
-            <Route path="/offers" element={<PrivateRoute><MyOffers /></PrivateRoute>} />
+            <Route path="/listings" element={<PrivateRoute><Listings /></PrivateRoute>} />
+            <Route path="/offers" element={<PrivateRoute><Offers /></PrivateRoute>} />
             <Route path="/browse" element={<PrivateRoute><Browse /></PrivateRoute>} />
           </Routes>
 
