@@ -49,6 +49,7 @@
   right: 0;
   top: 0;
   box-sizing: border-box;
+  z-index: 1001; /* ensure header sits above page content */
 }
 
 .Header-component {
@@ -65,6 +66,116 @@
   background-color: navy;
 }
 
+.Listing-component {
+  display: flex;                /* make the two inner divs appear side by side */
+  justify-content: space-between;
+  align-items: flex-start;      /* align items at the top */
+  color: white;
+  font-size: 18px;
+  min-width: 300px;
+  min-height: 100px;
+  background-color: navy;
+  border: 3px solid grey;
+  border-radius: 5px;
+  padding: 15px;
+  margin: 5px;
+  margin-top: 10px;
+}
+
+.Listing-component .Component-column {
+  flex: 1;                       /* each column gets equal width */
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;       /* text aligns left nicely */
+  gap: 8px;                      /* space between h4, p, and button */
+}
+.Listing-component .Component-column h4 {
+  padding-right: 20px;
+}
+
+.Listing-component .Component-column p {
+  padding-right: 20px;
+}
+
+
+.Listings-container {
+  display: flex;
+  flex-wrap: wrap;
+  columns: 2;
+  gap: 48px; /* increased gap between columns */
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.Listing-image {
+  max-width: 200px;
+  max-height: 300px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+}
+
+.Listings-column {
+  flex: 1;
+  min-width: 200px;
+  max-width: 500px;
+  margin-right: 40px;
+  margin-left: 40px;
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+  gap: 16px;
+}
+
+/* Scrollable box used under each column heading */
+.scroll-box {
+  width: 100%;
+  max-height: 1000px;
+  height: 320px;
+  overflow-y: auto;
+  background: #ffffff;
+  border-radius: 8px;
+  border: 1px solid #e0e0e0;
+  padding: 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  box-sizing: border-box;
+}
+
+.column-title {
+  margin: 0;
+  font-size: 20px;
+  color: #222;
+}
+
+.Delete-listing {
+  background-color: #ff4d4d;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 4px;
+  top: auto;
+  right: auto;
+  left: auto;
+  cursor: pointer;
+}
+
+.Goto-listing {
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.Unfollow-listing {
+  background-color: #ff9900;
+  color: white;
+  border: none;
+  padding: 8px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+}
 
 /* Logo box on the left of the header */
 .logo-box {
@@ -95,12 +206,27 @@
 
 .App-body {
   background-color: #f0f0f0;
-  padding: 20px;  
+  /* add top padding so fixed header doesn't overlap content */
+  padding: calc(100px + 20px) 20px 20px 20px; 
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   flex-grow: 1;
+}
+
+/* generic page content container for routed pages (non-Home) */
+.page-content {
+  padding-top: calc(100px + 24px); /* account for header height + small gutter */
+  padding-left: 24px;
+  padding-right: 24px;
+  padding-bottom: 24px;
+}
+
+/* fallback for pages that used <main> directly */
+main {
+  /* only apply top spacing if no other padding/layout is set */
+  box-sizing: border-box;
 }
 
 .App-footer {

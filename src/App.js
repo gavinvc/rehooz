@@ -3,8 +3,8 @@ import rehooz_rectangle from './rehooz-rectangle.png';
 import './App.css';
 import Home from './pages/Home';
 import Profile from './pages/Profile';
-import MyListings from './pages/MyListings';
-import MyOffers from './pages/MyOffers';
+import Listings from './pages/Listings';
+import Offers from './pages/Offers';
 import Browse from './pages/Browse';
 
 function App() {
@@ -21,15 +21,15 @@ function App() {
           <nav className="header-nav">
             <Link to="/profile"><button className="Header-component">Profile</button></Link>
             <Link to="/listings"><button className="Header-component">My Listings</button></Link>
-            <Link to="/offers"><button className="Header-component">My Offers</button></Link>
+            <Link to="/offers"><button className="Header-component">Offers</button></Link>
             <Link to="/browse"><button className="Header-component">Browse</button></Link>
           </nav>
         </header>
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/profile" element={<Profile />} />
-          <Route path="/listings" element={<MyListings />} />
-          <Route path="/offers" element={<MyOffers />} />
+          <Route path="/listings" element={<Listings />} />
+          <Route path="/offers" element={<Offers />} />
           <Route path="/browse" element={<Browse />} />
         </Routes>
         <footer className="App-footer">

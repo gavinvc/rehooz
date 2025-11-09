@@ -1,8 +1,8 @@
 import React from 'react';
 
-export default function MyOffers() {
+export default function Offers() {
   return (
-    <main style={{padding: '24px'}}>
+    <main className="page-content">
       <h2>My Offers</h2>
       <p>Offers you've made/received (placeholder).</p>
     </main>
