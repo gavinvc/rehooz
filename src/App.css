@@ -134,6 +134,27 @@
   gap: 16px;
 }
 
+.Offers-column {
+  flex: 1;
+  min-width: 200px;
+  max-width: 500px;
+  margin-right: 40px;
+  margin-left: 40px;
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+  gap: 16px;
+}
+
+.Offers-container {
+  display: flex;
+  flex-wrap: wrap;
+  columns: 2;
+  gap: 48px; /* increased gap between columns */
+  justify-content: center;
+  margin-top: 20px;
+}
+
 /* Scrollable box used under each column heading */
 .scroll-box {
   width: 100%;
