@@ -1,28 +1,38 @@
 <?php
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
-
-include("config.php");
+header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Headers: Content-Type");
+header("Access-Control-Allow-Methods: POST, OPTIONS");
 header("Content-Type: application/json");
+
+require 'config.php';
 
 $data = json_decode(file_get_contents("php://input"), true);
 
-$username = $data["username"] ?? '';
-$password = $data["password"] ?? '';
+if (!isset($data['username']) || !isset($data['password'])) {
+    echo json_encode(["status" => "fail", "message" => "Missing username or password"]);
+    exit;
+}
 
-$sql = "SELECT * FROM User WHERE username = ?";
-$stmt = $conn->prepare($sql);
+$username = trim($data['username']);
+$password = trim($data['password']);
+
+$stmt = $conn->prepare("SELECT user_id, username, password, email, city, profile_desc, overall_rating 
+                        FROM User WHERE username = ?");
 $stmt->bind_param("s", $username);
 $stmt->execute();
 $result = $stmt->get_result();
 
-if ($user = $result->fetch_assoc()) {
-    if ($password === $user["password"]) {
-        echo json_encode(["status" => "success", "user" => $user]);
+if ($row = $result->fetch_assoc()) {
+    if (password_verify($password, $row['password'])) {
+        unset($row['password']); // Never send password hash to frontend
+        echo json_encode(["status" => "success", "user" => $row]);
     } else {
         echo json_encode(["status" => "fail", "message" => "Incorrect password"]);
     }
 } else {
     echo json_encode(["status" => "fail", "message" => "User not found"]);
 }
+
+$stmt->close();
+$conn->close();
 ?>

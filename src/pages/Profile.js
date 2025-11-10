@@ -41,7 +41,7 @@ export default function Profile() {
         .then(data => {
           if (data.status === "success") {
             setDesc(data.user.profile_desc || "");
-            setRating(data.user.overall_rating || 0);
+            setRating(parseFloat(data.user.overall_rating) || 0);
           }
         })
         .catch(() => {
