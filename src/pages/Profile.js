@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from 'react-router-dom';
 
 export default function Profile() {
   const [user, setUser] = useState(null);
@@ -7,9 +8,32 @@ export default function Profile() {
   const [passwords, setPasswords] = useState({ current: "", new: "", confirm: "" });
   const [message, setMessage] = useState("");
   const [editing, setEditing] = useState(false);
+  const [checked, setChecked] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
-    const storedUser = JSON.parse(localStorage.getItem("user"));
+    // Robust login detection:
+    const storedUserRaw = localStorage.getItem("user");
+    let storedUser = null;
+    try {
+      storedUser = storedUserRaw ? JSON.parse(storedUserRaw) : null;
+    } catch (err) {
+      // malformed JSON — clear it out and treat as not-logged-in
+      console.warn('Malformed user in localStorage, removing');
+      localStorage.removeItem('user');
+      storedUser = null;
+    }
+
+    const authToken = localStorage.getItem('authToken');
+
+    // If there's no auth token and no stored user, user is not logged in -> redirect to home
+    const isLoggedIn = Boolean(authToken || (storedUser && storedUser.user_id));
+    if (!isLoggedIn) {
+      navigate('/');
+      return;
+    }
+
+    // We have a logged-in user — load profile info if possible
     if (storedUser) {
       setUser(storedUser);
       fetch(`https://www.cs.virginia.edu/~zha4ub/rehooz/backend/get_user.php?id=${storedUser.user_id}`)
@@ -19,9 +43,14 @@ export default function Profile() {
             setDesc(data.user.profile_desc || "");
             setRating(data.user.overall_rating || 0);
           }
+        })
+        .catch(() => {
+          // ignore fetch errors for now
         });
     }
-  }, []);
+
+    setChecked(true);
+  }, [navigate]);
 
   const handleDescSave = async () => {
     const res = await fetch("https://www.cs.virginia.edu/~zha4ub/rehooz/backend/update_profile.php", {
@@ -54,7 +83,7 @@ export default function Profile() {
     setPasswords({ current: "", new: "", confirm: "" });
   };
 
-  if (!user) return <h2 style={{ textAlign: "center" }}>Loading...</h2>;
+  if (!checked) return null; // avoid flash before redirect/check completes
 
   return (
     <main style={{ padding: "40px", maxWidth: "600px", margin: "0 auto" }}>
@@ -63,8 +92,11 @@ export default function Profile() {
 
       <section style={{ marginTop: "20px" }}>
         <h3>Account Info</h3>
-        <p><strong>Username:</strong> {user.username}</p>
-        <p><strong>Overall Rating:</strong> {rating.toFixed(1)}</p>
+        <p><strong>Username:</strong> {user?.username}</p>
+        <p>
+          <strong>Overall Rating:</strong>{' '}
+          {((typeof rating === 'number' ? rating : Number(rating)) || 0).toFixed(1)}
+        </p>
       </section>
 
       <section style={{ marginTop: "25px" }}>
