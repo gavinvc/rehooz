@@ -1,21 +1,24 @@
-# Use official Node image
+# Use Node official image
 FROM node:18-alpine
 
-# Set working directory inside container
+# Set working directory
 WORKDIR /app
 
-# Copy package files first (for better caching)
+# Copy package files and install dependencies
 COPY package*.json ./
-
-# Install dependencies
 RUN npm install
 
-# Copy the rest of your app
+# Copy all files
 COPY . .
 
-# Expose the port that `npm start` uses (usually 3000)
-EXPOSE 3000
+# Build the React app
+RUN npm run build
 
-# Run the app
-CMD ["npm", "start"]
+# Install serve globally
+RUN npm install -g serve
 
+# Expose Cloud Run port
+EXPOSE 8080
+
+# Use the environment variable $PORT
+CMD ["serve", "-s", "build", "-l", "8080"]
