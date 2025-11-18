@@ -8,7 +8,7 @@ export default function Browse() {
   useEffect(() => {
     // Fetch all listings - backend endpoint may be 'get_all_listings.php'
     // If your backend uses a different route, update the URL below.
-    const url = 'https://www.cs.virginia.edu/~zha4ub/rehooz/backend/get_all_listings.php';
+    const url = '/backend/get_all_listings.php';
 
     fetch(url)
       .then((res) => res.json())
@@ -52,11 +52,11 @@ export default function Browse() {
                       {item.location ? ` • ${item.location}` : ''}
                     </p>
                   </div>
-                  <img
+                  {/* <img
                     className="listing-image"
                     src={`https://www.cs.virginia.edu/~zha4ub/rehooz/photos/${item.photo || 'default.jpg'}`}
                     alt={item.name || item.title || 'listing'}
-                  />
+                  /> */}
                 </div>
               ))}
             </div>

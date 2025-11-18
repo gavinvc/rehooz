@@ -1,24 +1,23 @@
-# Use Node official image
-FROM node:18-alpine
-
-# Set working directory
+FROM node:18-alpine AS build
 WORKDIR /app
 
-# Copy package files and install dependencies
 COPY package*.json ./
 RUN npm install
 
-# Copy all files
 COPY . .
-
-# Build the React app
 RUN npm run build
 
-# Install serve globally
-RUN npm install -g serve
+FROM php:8.2-apache
 
-# Expose Cloud Run port
+RUN a2enmod rewrite
+
+ENV PORT=8080
 EXPOSE 8080
 
-# Use the environment variable $PORT
-CMD ["serve", "-s", "build", "-l", "8080"]
+COPY --from=build /app/build/ /var/www/html/
+
+COPY backend/ /var/www/html/backend/
+
+RUN chown -R www-data:www-data /var/www/html
+
+CMD ["apache2-foreground"]

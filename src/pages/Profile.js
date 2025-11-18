@@ -36,7 +36,7 @@ export default function Profile() {
     // We have a logged-in user — load profile info if possible
     if (storedUser) {
       setUser(storedUser);
-      fetch(`https://www.cs.virginia.edu/~zha4ub/rehooz/backend/get_user.php?id=${storedUser.user_id}`)
+      fetch(`/backend/get_user.php?id=${storedUser.user_id}`)
         .then(res => res.json())
         .then(data => {
           if (data.status === "success") {
@@ -53,7 +53,7 @@ export default function Profile() {
   }, [navigate]);
 
   const handleDescSave = async () => {
-    const res = await fetch("https://www.cs.virginia.edu/~zha4ub/rehooz/backend/update_profile.php", {
+    const res = await fetch("/backend/update_profile.php", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ user_id: user.user_id, profile_desc: desc }),
@@ -69,7 +69,7 @@ export default function Profile() {
       setMessage("New passwords do not match.");
       return;
     }
-    const res = await fetch("https://www.cs.virginia.edu/~zha4ub/rehooz/backend/change_pwd.php", {
+    const res = await fetch("/backend/change_pwd.php", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

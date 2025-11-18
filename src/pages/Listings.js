@@ -11,7 +11,7 @@ export default function Listings() {
   // Fetch my listings
   useEffect(() => {
     if (!user) return;
-    fetch(`https://www.cs.virginia.edu/~zha4ub/rehooz/backend/get_my_listings.php?user_id=${user.user_id}`)
+    fetch(`backend/get_my_listings.php?user_id=${user.user_id}`)
       .then((res) => res.json())
       .then((data) => {
         if (data.status === "success") setMyListings(data.listings);
@@ -21,7 +21,7 @@ export default function Listings() {
   // Handle add listing
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const res = await fetch("https://www.cs.virginia.edu/~zha4ub/rehooz/backend/add_listing.php", {
+    const res = await fetch("/backend/add_listing.php", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ ...form, seller_id: user.user_id }),
@@ -31,7 +31,7 @@ export default function Listings() {
     if (data.status === "success") {
       setForm({ name: "", price: "", description: "", location: "" });
       // Refresh listings
-      const refreshed = await fetch(`https://www.cs.virginia.edu/~zha4ub/rehooz/backend/get_my_listings.php?user_id=${user.user_id}`);
+      const refreshed = await fetch(`/backend/get_my_listings.php?user_id=${user.user_id}`);
       const refreshedData = await refreshed.json();
       setMyListings(refreshedData.listings);
     }
@@ -57,9 +57,9 @@ export default function Listings() {
                     <button className="Goto-listing">Go to</button>
                   </div>
                   <div className="Component-column">
-                    <img src={`https://www.cs.virginia.edu/~zha4ub/rehooz/photos/${item.photo || "default.jpg"}`} 
+                    {/* <img src={`https://www.cs.virginia.edu/~zha4ub/rehooz/photos/${item.photo || "default.jpg"}`} 
                          alt={item.name}
-                         className="Listing-image" />
+                         className="Listing-image" /> */}
                     <button className="Delete-listing">Delete</button>
                   </div>
                 </div>

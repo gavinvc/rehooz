@@ -16,8 +16,8 @@ export default function Login() {
     e.preventDefault();
 
     const endpoint = isRegister
-        ? "https://www.cs.virginia.edu/~zha4ub/rehooz/backend/register.php"
-        : "https://www.cs.virginia.edu/~zha4ub/rehooz/backend/login.php";
+        ? "/backend/register.php"
+        : "/backend/login.php";
 
     const res = await fetch(endpoint, {
       method: "POST",
