@@ -3,16 +3,14 @@ header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: POST, GET, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type");
 
-// UVA CS MySQL server connection
-$servername = "mysql01.cs.virginia.edu"; 
-$username = "zha4ub";       // your computing ID
-$password = "Fall2025";  // from phpMyAdmin
-$dbname = "zha4ub";
+// Google Cloud SQL connection
+$servername = "136.107.23.167"; // your Cloud SQL public IP
+$username = "phpadmin";         // the user you created in Cloud SQL
+$password = "CvilleF25";   // its password
+$dbname = "ReHoozDB";            // database name in Cloud SQL
 
-// connect
 $conn = new mysqli($servername, $username, $password, $dbname);
 
-// check connection
 if ($conn->connect_error) {
     die(json_encode([
         "status" => "error",
