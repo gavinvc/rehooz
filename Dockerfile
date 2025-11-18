@@ -11,6 +11,10 @@ FROM php:8.2-apache
 
 RUN a2enmod rewrite
 
+RUN apt-get update && apt-get install -y libzip-dev \
+    && docker-php-ext-install mysqli pdo pdo_mysql \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
 ENV PORT=8080
 EXPOSE 8080
 
