@@ -68,3 +68,7 @@ This section has moved here: [https://facebook.github.io/create-react-app/docs/d
 ### `npm run build` fails to minify
 
 This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+
+Google Cloud CLI commands: 
+gcloud builds submit --tag gcr.io/rehoozdb/rehooz-app
+gcloud run deploy rehooz-app --image gcr.io/rehoozdb/rehooz-app --platform managed --region us-east4 --allow-unauthenticated
