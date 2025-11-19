@@ -1,12 +1,19 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
-export default function Login() {
+// Backend base URL (Cloud Run service)
+const API_BASE_URL =
+  "https://rehooz-app-491933218528.us-east4.run.app/backend";
+
+export default function Login({ setUser }) {
+  const navigate = useNavigate();
+
   const [isRegister, setIsRegister] = useState(false);
   const [form, setForm] = useState({
     username: "",
     email: "",
     city: "",
-    password: ""
+    password: "",
   });
 
   const handleChange = (e) =>
@@ -16,27 +23,45 @@ export default function Login() {
     e.preventDefault();
 
     const endpoint = isRegister
-        ? "https://rehooz-app-491933218528.us-east4.run.app/backend/register.php"
-        : "https://rehooz-app-491933218528.us-east4.run.app/backend/login.php";
+      ? `${API_BASE_URL}/register.php`
+      : `${API_BASE_URL}/login.php`;
 
-    const res = await fetch(endpoint, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
-    });
-    const data = await res.json();
+    try {
+      const res = await fetch(endpoint, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
 
-    if (data.status === "success") {
-      if (isRegister) {
-        alert("Account created! You can log in now.");
-        setIsRegister(false);
-      } else {
-        localStorage.setItem("user", JSON.stringify(data.user));
-        alert("Welcome back, " + data.user.username + "!");
-        window.location.href = "/home";
+      if (!res.ok) {
+        const text = await res.text();
+        console.error("Backend error response:", text);
+        alert("Server error while contacting backend.");
+        return;
       }
-    } else {
-      alert(data.message || "Error occurred");
+
+      const data = await res.json();
+
+      if (data.status === "success") {
+        if (isRegister) {
+          alert("Account created! You can log in now.");
+          setIsRegister(false);
+        } else {
+          // Save to localStorage AND update App state
+          localStorage.setItem("user", JSON.stringify(data.user));
+          if (setUser) {
+            setUser(data.user);
+          }
+
+          alert("Welcome back, " + data.user.username + "!");
+          navigate("/home");
+        }
+      } else {
+        alert(data.message || "Error occurred");
+      }
+    } catch (err) {
+      console.error("Network / parse error:", err);
+      alert("Network error contacting backend.");
     }
   };
 

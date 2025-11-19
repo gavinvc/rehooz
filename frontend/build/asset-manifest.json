@@ -1,0 +1,17 @@
+{
+  "files": {
+    "main.css": "/static/css/main.24f5b3a8.css",
+    "main.js": "/static/js/main.3972ca44.js",
+    "static/js/453.b06614d3.chunk.js": "/static/js/453.b06614d3.chunk.js",
+    "static/media/rehooz-square.png": "/static/media/rehooz-square.834edbde0ed42f8efd78.png",
+    "static/media/rehooz-rectangle.png": "/static/media/rehooz-rectangle.84dee25fe531ed44031d.png",
+    "index.html": "/index.html",
+    "main.24f5b3a8.css.map": "/static/css/main.24f5b3a8.css.map",
+    "main.3972ca44.js.map": "/static/js/main.3972ca44.js.map",
+    "453.b06614d3.chunk.js.map": "/static/js/453.b06614d3.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.24f5b3a8.css",
+    "static/js/main.3972ca44.js"
+  ]
+}
