@@ -15,6 +15,11 @@ function PrivateRoute({ children }) {
   return user ? children : <Navigate to="/" />;
 }
 
+function PublicRoute({ children }) {
+  const user = localStorage.getItem("user");
+  return user ? <Navigate to="/home" /> : children;
+}
+
 function App() {
   const user = localStorage.getItem("user"); 
 
@@ -44,8 +49,8 @@ function App() {
           )}
 
           <Routes>
-            {/* Login/Register is the default route */}
-            <Route path="/" element={<Login />} />
+            {/* Login/Register is the default route; only show when NOT logged in */}
+            <Route path="/" element={<PublicRoute><Login /></PublicRoute>} />
 
             {/* Protect all other routes */}
             <Route path="/home" element={<PrivateRoute><Home /></PrivateRoute>} />
