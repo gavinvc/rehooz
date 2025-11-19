@@ -7,7 +7,7 @@ header("Access-Control-Allow-Headers: Content-Type");
 $servername = "136.107.23.167"; // your Cloud SQL public IP
 $username = "phpadmin";         // the user you created in Cloud SQL
 $password = "CvilleF25";   // its password
-$dbname = "ReHoozDB";            // database name in Cloud SQL
+$dbname = "rehooz-db";            // database name in Cloud SQL
 
 $conn = new mysqli($servername, $username, $password, $dbname);
 
