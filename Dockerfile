@@ -17,6 +17,9 @@ RUN docker-php-ext-install mysqli
 RUN wget https://dl.google.com/cloudsql/cloud_sql_proxy.linux.amd64 -O /cloud_sql_proxy \
     && chmod +x /cloud_sql_proxy
 
+# Enable mod_rewrite and allow .htaccess override
+RUN a2enmod rewrite
+RUN sed -i 's/AllowOverride None/AllowOverride All/g' /etc/apache2/apache2.conf
 
 # =========================================
 # 3. Make Apache listen on Cloud Run PORT
