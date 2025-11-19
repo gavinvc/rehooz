@@ -1,0 +1,30 @@
+# Ignore ALL node_modules anywhere in the project
+node_modules/
+**/node_modules/
+
+# Ignore React build output
+frontend/build/
+frontend/dist/
+
+# Ignore Git
+.git/
+.gitignore
+
+# Ignore local environment files
+.env
+.env.local
+.env.development
+.env.production
+
+# Ignore Docker files
+Dockerfile
+docker-compose.yml
+
+# Ignore logs
+npm-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Ignore OS-specific files
+.DS_Store
+Thumbs.db
