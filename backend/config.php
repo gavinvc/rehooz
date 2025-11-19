@@ -3,14 +3,12 @@ header("Access-Control-Allow-Origin: *");
 header("Access-Control-Allow-Methods: POST, GET, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type");
 
-// Google Cloud SQL connection
-$servername = "35.186.175.37"; // your Cloud SQL public IP
-$username = "user1";         // the user you created in Cloud SQL
-$password = "J^`qieBjK8YjdVDY";   // its password
-$dbname = "rehoozdatabase";            // database name in Cloud SQL
-$port = 3306;  
+$host = "/cloudsql/rehoozdb:us-east4:rehooz2025";
+$username = "root";
+$password = ")6Mn<~BRa8G0Cy^A";
+$dbname = "rehoozdatabase";
 
-$conn = new mysqli($servername, $username, $password, $dbname, $port);
+$conn = new mysqli(null, $username, $password, $dbname, null, $host);
 
 if ($conn->connect_error) {
     die(json_encode([
