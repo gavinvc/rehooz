@@ -245,6 +245,96 @@ button.link-like:hover {
   transform: translateY(-2px);
 }
 
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 16px;
+  background: linear-gradient(to bottom right, rgba(246, 242, 238, 0.95), rgba(238, 241, 245, 0.95));
+  backdrop-filter: blur(4px);
+}
+
+.modal-card {
+  width: min(520px, 95vw);
+  max-height: calc(100vh - 160px);
+  overflow-y: auto;
+}
+
+.modal-close-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.modal-close-btn {
+  border: none;
+  background: transparent;
+  font-size: 1.6rem;
+  line-height: 1;
+  cursor: pointer;
+  color: #666;
+  padding: 0 6px;
+}
+
+.modal-logo {
+  width: 160px;
+  margin: 0 auto 6px;
+  display: block;
+  border-radius: 16px;
+}
+
+.modal-card form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.modal-card input,
+.modal-card textarea {
+  width: 100%;
+  border-radius: 16px;
+  border: 1px solid #e0e0e0;
+  padding: 12px 14px;
+  font-size: 15px;
+  background-color: #fafafa;
+  transition: border-color 0.2s ease;
+  resize: vertical;
+}
+
+.modal-card input:focus,
+.modal-card textarea:focus {
+  outline: none;
+  border-color: #ff8e57;
+}
+
+.modal-submit-btn {
+  align-self: flex-end;
+  background: linear-gradient(90deg, #ff6a3d, #ff8e57);
+  color: #fff;
+  border: none;
+  padding: 12px 28px;
+  border-radius: 24px;
+  font-size: 15px;
+  cursor: pointer;
+  transition: transform 0.25s ease, opacity 0.2s ease;
+}
+
+.modal-submit-btn:hover {
+  opacity: 0.9;
+  transform: translateY(-2px);
+}
+
+.modal-message {
+  margin-top: 12px;
+  font-size: 14px;
+  color: #555;
+}
+
 
 /* responsive tweaks */
 @media (max-width: 640px) {

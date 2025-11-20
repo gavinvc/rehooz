@@ -5,6 +5,7 @@ export default function Listings() {
   const [myListings, setMyListings] = useState([]);
   const [form, setForm] = useState({ name: "", price: "", description: "", location: "" });
   const [message, setMessage] = useState("");
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const user = JSON.parse(localStorage.getItem("user"));
 
@@ -36,10 +37,67 @@ export default function Listings() {
       setMyListings(refreshedData.listings);
     }
   };
-
   return (
     <main className="page-content">
-      <h2>Listings</h2>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "16px" }}>
+        <h2>Listings</h2>
+        <button type="button" className="Goto-listing add-listing-btn" onClick={() => setIsModalOpen(true)}>
+          Add Listing
+        </button>
+      </div>
+
+      {isModalOpen && (
+        <div className="modal-overlay" role="dialog" aria-modal="true" aria-label="Add listing form">
+          <div className="home-card modal-card">
+            <div className="modal-close-row">
+              <h4 style={{ margin: 0 }}>Add a New Listing</h4>
+              <button
+                type="button"
+                onClick={() => setIsModalOpen(false)}
+                aria-label="Close add listing modal"
+                className="modal-close-btn"
+              >
+                ×
+              </button>
+            </div>
+            <img src={rehooz_square} alt="Rehooz" className="home-logo modal-logo" />
+            <form onSubmit={handleSubmit}>
+              <input
+                name="name"
+                placeholder="Item Name"
+                value={form.name}
+                onChange={(e) => setForm({ ...form, name: e.target.value })}
+                required
+              />
+              <input
+                name="price"
+                placeholder="Price"
+                type="number"
+                value={form.price}
+                onChange={(e) => setForm({ ...form, price: e.target.value })}
+                required
+              />
+              <input
+                name="location"
+                placeholder="Location"
+                value={form.location}
+                onChange={(e) => setForm({ ...form, location: e.target.value })}
+                required
+              />
+              <textarea
+                name="description"
+                placeholder="Description"
+                value={form.description}
+                onChange={(e) => setForm({ ...form, description: e.target.value })}
+                required
+              />
+              <button type="submit" className="modal-submit-btn">Add Listing</button>
+            </form>
+            {message && <p className="modal-message">{message}</p>}
+          </div>
+        </div>
+      )}
+
       <div className="Listings-container">
         {/* My Listings */}
         <div className="Listings-column">
@@ -67,41 +125,6 @@ export default function Listings() {
             )}
           </div>
 
-          {/* Add Listing Form */}
-          <h4 style={{ marginTop: "20px" }}>Add a New Listing</h4>
-          <form onSubmit={handleSubmit}>
-            <input
-              name="name"
-              placeholder="Item Name"
-              value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
-              required
-            />
-            <input
-              name="price"
-              placeholder="Price"
-              type="number"
-              value={form.price}
-              onChange={(e) => setForm({ ...form, price: e.target.value })}
-              required
-            />
-            <input
-              name="location"
-              placeholder="Location"
-              value={form.location}
-              onChange={(e) => setForm({ ...form, location: e.target.value })}
-              required
-            />
-            <textarea
-              name="description"
-              placeholder="Description"
-              value={form.description}
-              onChange={(e) => setForm({ ...form, description: e.target.value })}
-              required
-            />
-            <button type="submit">Add Listing</button>
-          </form>
-          {message && <p>{message}</p>}
         </div>
 
         {/* Followed Listings */}
