@@ -8,33 +8,35 @@ import Profile from "./pages/Profile";
 import Listings from "./pages/Listings";
 import Offers from "./pages/Offers";
 import Browse from "./pages/Browse";
+import Connect from "./pages/Connect";
 import Login from "./pages/login";
 
-// PrivateRoute now takes `user` as a prop instead of reading localStorage
 function PrivateRoute({ children, user }) {
   return user ? children : <Navigate to="/" />;
 }
 
-// PublicRoute also takes `user` as a prop
 function PublicRoute({ children, user }) {
   return user ? <Navigate to="/home" /> : children;
 }
 
 function App() {
-  // Keep user in React state, initialized from localStorage
   const [user, setUser] = useState(() => {
     const stored = localStorage.getItem("user");
     return stored ? JSON.parse(stored) : null;
   });
 
+  // controls hamburger dropdown on small screens
+  const [navOpen, setNavOpen] = useState(false);
+
+  const closeNav = () => setNavOpen(false);
+
   return (
     <div className="App-container">
       <div className="App">
-        {/* Hide header/nav on Login screen */}
         {user && (
           <header className="App-header">
             <div className="logo-box">
-              <Link to="/home">
+              <Link to="/home" onClick={closeNav}>
                 <img
                   src={rehooz_rectangle}
                   className="rehooz-rectangle"
@@ -43,36 +45,48 @@ function App() {
               </Link>
             </div>
 
-            <nav className="header-nav">
-              <Link to="/profile">
+            {/* Hamburger button (visible on small screens via CSS) */}
+            <button
+              className="Hamburger"
+              aria-label="Toggle navigation"
+              onClick={() => setNavOpen((open) => !open)}
+            >
+              <span />
+              <span />
+              <span />
+            </button>
+
+            {/* Nav links – become dropdown on small screens */}
+            <nav className={`header-nav ${navOpen ? "nav-open" : ""}`}>
+              <Link to="/profile" onClick={closeNav}>
                 <button className="Header-component">Profile</button>
               </Link>
-              <Link to="/listings">
+              <Link to="/listings" onClick={closeNav}>
                 <button className="Header-component">My Listings</button>
               </Link>
-              <Link to="/offers">
+              <Link to="/offers" onClick={closeNav}>
                 <button className="Header-component">My Offers</button>
               </Link>
-              <Link to="/browse">
+              <Link to="/browse" onClick={closeNav}>
                 <button className="Header-component">Browse</button>
+              </Link>
+              <Link to="/connect" onClick={closeNav}>
+                <button className="Header-component">Connect</button>
               </Link>
             </nav>
           </header>
         )}
 
         <Routes>
-          {/* Login/Register is the default route; only show when NOT logged in */}
           <Route
             path="/"
             element={
               <PublicRoute user={user}>
-                {/* Pass setUser down so Login can update App state on successful login */}
                 <Login setUser={setUser} />
               </PublicRoute>
             }
           />
 
-          {/* Protect all other routes */}
           <Route
             path="/home"
             element={
@@ -110,6 +124,14 @@ function App() {
             element={
               <PrivateRoute user={user}>
                 <Browse />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/connect"
+            element={
+              <PrivateRoute user={user}>
+                <Connect user={user} />
               </PrivateRoute>
             }
           />

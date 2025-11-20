@@ -228,6 +228,7 @@
   gap: 12px;
   align-items: center;
 }
+
 .Header-component:hover {
   background-color: darkblue;
 }
@@ -235,7 +236,7 @@
 .App-body {
   background-color: #f0f0f0;
   /* add top padding so fixed header doesn't overlap content */
-  padding: calc(100px + 20px) 20px 20px 20px; 
+  padding: calc(100px + 20px) 20px 20px 20px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -290,6 +291,70 @@ main {
 
 .App-link {
   color: #61dafb;
+}
+
+/* ===================== */
+/*  HAMBURGER / RESPONSIVE NAV  */
+/* ===================== */
+
+/* Base hamburger styling (hidden on large screens) */
+.Hamburger {
+  display: none;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 28px;
+  height: 20px;
+  background: none;
+  border: none;
+  padding: 0;
+  margin-left: 12px;
+  margin-right: 8px;
+  cursor: pointer;
+}
+
+.Hamburger span {
+  display: block;
+  height: 3px;
+  border-radius: 2px;
+  background-color: #f5eedc; /* match header button tone */
+}
+
+/* On smaller screens, switch to hamburger + dropdown nav */
+@media (max-width: 950px) {
+  .App-header {
+    justify-content: flex-end;
+    padding-right: 16px;
+  }
+
+  .Hamburger {
+    display: flex;
+  }
+
+  /* hide inline nav by default */
+  .header-nav {
+    display: none;
+    position: absolute;
+    top: 100%;         /* just below header */
+    right: 8px;
+    flex-direction: column;
+    gap: 8px;
+    background-color: #282c34;
+    padding: 10px 12px;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    z-index: 1100;
+  }
+
+  /* when React adds nav-open class, show dropdown */
+  .header-nav.nav-open {
+    display: flex;
+  }
+
+  .header-nav .Header-component {
+    width: 100%;
+    text-align: left;
+    margin-left: 0;
+  }
 }
 
 @keyframes App-logo-spin {

@@ -1,11 +1,1 @@
-RewriteEngine On
-RewriteBase /
-
-# Allow direct access to PHP files
-RewriteCond %{REQUEST_FILENAME} -f
-RewriteRule ^ - [L]
-
-# Redirect everything else to React index.html
-RewriteCond %{REQUEST_FILENAME} !-d
-RewriteCond %{REQUEST_FILENAME} !-f
-RewriteRule ^ index.html [L]
+RewriteEngine Off

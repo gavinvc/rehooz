@@ -1,0 +1,15 @@
+RewriteEngine On
+RewriteBase /
+
+# 1. DO NOT rewrite backend API calls (serve PHP directly)
+RewriteCond %{REQUEST_URI} ^/backend/
+RewriteRule ^ - [L]
+
+# 2. Allow direct access to any real file (php, js, css, images, etc.)
+RewriteCond %{REQUEST_FILENAME} -f
+RewriteRule ^ - [L]
+
+# 3. Redirect everything else to React index.html (for HashRouter)
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^ index.html [L]

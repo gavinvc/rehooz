@@ -47,7 +47,7 @@ RUN npm run build
 
 # Copy built React frontend → Apache public folder
 RUN cp -r build/* /var/www/html/
-
+COPY .htaccess /var/www/html/.htaccess
 
 # ================================
 # 6. Expose Cloud Run port
