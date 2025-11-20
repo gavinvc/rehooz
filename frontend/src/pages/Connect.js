@@ -8,8 +8,7 @@ export default function Connect({ user: propUser }) {
   const navigate = useNavigate();
 
   // logged-in user from props or localStorage
-  const user =
-    propUser || JSON.parse(localStorage.getItem("user") || "null");
+  const user = propUser || JSON.parse(localStorage.getItem("user") || "null");
 
   const [following, setFollowing] = useState([]);
   const [followers, setFollowers] = useState([]);
@@ -109,7 +108,6 @@ export default function Connect({ user: propUser }) {
       });
       const data = await res.json();
       if (data.status === "success") {
-        // reload from server so counts & lists are correct
         await fetchConnections();
       } else {
         alert(data.message || "Could not follow user");
@@ -146,99 +144,101 @@ export default function Connect({ user: propUser }) {
   }
 
   return (
-    <div className="App-body">
-      <h2>Connect</h2>
+    <div className="connect-wrapper">
+      <div className="connect-card">
+        <h2 className="connect-title">Connect</h2>
 
-      <section style={{ marginBottom: "2rem" }}>
-        <form onSubmit={handleSearch}>
-          <input
-            type="text"
-            placeholder="Search by username"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            style={{ padding: "6px", minWidth: "250px" }}
-          />
-          <button type="submit" style={{ marginLeft: "8px" }}>
-            Search
-          </button>
-        </form>
+        {/* Search section */}
+        <section className="connect-search-section">
+          <form className="connect-search-form" onSubmit={handleSearch}>
+            <input
+              type="text"
+              className="connect-search-input"
+              placeholder="Search by username"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+            <button type="submit" className="connect-search-btn">
+              Search
+            </button>
+          </form>
 
-        {loading && (
-          <p style={{ marginTop: "8px" }}>Loading…</p>
-        )}
+          {loading && <p className="connect-loading">Loading…</p>}
 
-        {searchResults.length > 0 && (
-          <div style={{ marginTop: "1rem" }}>
-            <h3>Search Results</h3>
-            <ul style={{ listStyle: "none", padding: 0 }}>
-              {searchResults.map((u) => {
-                const isFollowing = followingIds.has(u.user_id);
-                return (
-                  <li
-                    key={u.user_id}
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      padding: "6px 0",
-                      borderBottom: "1px solid #ddd",
-                    }}
-                  >
-                    <span>
-                      <strong>{u.username}</strong>
-                      {u.city ? ` · ${u.city}` : ""}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        isFollowing
-                          ? unfollow(u.user_id)
-                          : follow(u.user_id)
-                      }
-                    >
-                      {isFollowing ? "Unfollow" : "Follow"}
-                    </button>
+          {searchResults.length > 0 && (
+            <div className="connect-search-results">
+              <h3>Search Results</h3>
+              <ul>
+                {searchResults.map((u) => {
+                  const isFollowing = followingIds.has(u.user_id);
+                  return (
+                    <li key={u.user_id} className="connect-result-item">
+                      <div className="connect-result-text">
+                        <span className="connect-username">{u.username}</span>
+                        {u.city && (
+                          <span className="connect-city">· {u.city}</span>
+                        )}
+                      </div>
+                      <button
+                        type="button"
+                        className={
+                          isFollowing
+                            ? "follow-btn follow-btn--outline"
+                            : "follow-btn"
+                        }
+                        onClick={() =>
+                          isFollowing ? unfollow(u.user_id) : follow(u.user_id)
+                        }
+                      >
+                        {isFollowing ? "Unfollow" : "Follow"}
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          )}
+        </section>
+
+        {/* Following / followers columns */}
+        <section className="connect-columns">
+          <div className="connect-column">
+            <h3>People You Follow ({following.length})</h3>
+            {following.length === 0 ? (
+              <p className="connect-empty">You aren't following anyone yet.</p>
+            ) : (
+              <ul>
+                {following.map((u) => (
+                  <li key={u.user_id} className="connect-name-row">
+                    <span className="connect-username">{u.username}</span>
+                    {u.city && (
+                      <span className="connect-city">· {u.city}</span>
+                    )}
                   </li>
-                );
-              })}
-            </ul>
+                ))}
+              </ul>
+            )}
           </div>
-        )}
-      </section>
 
-      <section style={{ display: "flex", gap: "3rem", flexWrap: "wrap" }}>
-        <div>
-          <h3>People You Follow ({following.length})</h3>
-          {following.length === 0 ? (
-            <p>You aren't following anyone yet.</p>
-          ) : (
-            <ul style={{ listStyle: "none", padding: 0 }}>
-              {following.map((u) => (
-                <li key={u.user_id} style={{ padding: "4px 0" }}>
-                  <strong>{u.username}</strong>
-                  {u.city ? ` · ${u.city}` : ""}
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-
-        <div>
-          <h3>Your Followers ({followers.length})</h3>
-          {followers.length === 0 ? (
-            <p>No followers yet.</p>
-          ) : (
-            <ul style={{ listStyle: "none", padding: 0 }}>
-              {followers.map((u) => (
-                <li key={u.user_id} style={{ padding: "4px 0" }}>
-                  <strong>{u.username}</strong>
-                  {u.city ? ` · ${u.city}` : ""}
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      </section>
+          <div className="connect-column">
+            <h3>Your Followers ({followers.length})</h3>
+            {followers.length === 0 ? (
+              <p className="connect-empty">No followers yet.</p>
+            ) : (
+              <ul>
+                {followers.map((u) => (
+                  <li key={u.user_id} className="connect-name-row">
+                    <span className="connect-username">{u.username}</span>
+                    {u.city && (
+                      <span className="connect-city">· {u.city}</span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </section>
+      </div>
     </div>
   );
 }

@@ -1,3 +1,4 @@
+// frontend/src/pages/login.js
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -47,11 +48,8 @@ export default function Login({ setUser }) {
           alert("Account created! You can log in now.");
           setIsRegister(false);
         } else {
-          // Save to localStorage AND update App state
           localStorage.setItem("user", JSON.stringify(data.user));
-          if (setUser) {
-            setUser(data.user);
-          }
+          if (setUser) setUser(data.user);
 
           alert("Welcome back, " + data.user.username + "!");
           navigate("/home");
@@ -66,63 +64,75 @@ export default function Login({ setUser }) {
   };
 
   return (
-    <div className="App-body">
-      <h2>{isRegister ? "Create an Account" : "Login to Rehooz"}</h2>
+    <div className="login-page">
+      <div className="login-card">
+        <h2 className="login-title">
+          {isRegister ? "Create an Account" : "Login to Rehooz"}
+        </h2>
 
-      <form onSubmit={handleSubmit}>
-        <input
-          name="username"
-          placeholder="Username"
-          value={form.username}
-          onChange={handleChange}
-          required
-        />
-        {isRegister && (
-          <>
-            <input
-              name="email"
-              placeholder="Email"
-              value={form.email}
-              onChange={handleChange}
-              required
-            />
-            <input
-              name="city"
-              placeholder="City"
-              value={form.city}
-              onChange={handleChange}
-            />
-          </>
-        )}
-        <input
-          type="password"
-          name="password"
-          placeholder="Password"
-          value={form.password}
-          onChange={handleChange}
-          required
-        />
-
-        <button type="submit" style={{ marginTop: "10px" }}>
-          {isRegister ? "Sign Up" : "Login"}
-        </button>
-      </form>
-
-      <p style={{ marginTop: "15px" }}>
-        {isRegister ? "Already have an account?" : "Don't have an account?"}{" "}
-        <button
-          onClick={() => setIsRegister(!isRegister)}
-          style={{
-            background: "none",
-            color: "#2196F3",
-            border: "none",
-            cursor: "pointer",
-            textDecoration: "underline",
-          }}
+        <form
+          onSubmit={handleSubmit}
+          className="login-form"
         >
-          {isRegister ? "Login" : "Register"}
-        </button>
-      </p>
+          <input
+            className="input-bubble"
+            name="username"
+            placeholder="Username"
+            value={form.username}
+            onChange={handleChange}
+            required
+          />
+
+          {isRegister && (
+            <>
+              <input
+                className="input-bubble"
+                type="email"
+                name="email"
+                placeholder="Email"
+                value={form.email}
+                onChange={handleChange}
+                required
+              />
+              <input
+                className="input-bubble"
+                name="city"
+                placeholder="City (optional)"
+                value={form.city}
+                onChange={handleChange}
+              />
+            </>
+          )}
+
+          <input
+            className="input-bubble"
+            type="password"
+            name="password"
+            placeholder="Password"
+            value={form.password}
+            onChange={handleChange}
+            required
+          />
+
+          <button
+            type="submit"
+            className="auth-button"
+          >
+            {isRegister ? "Sign Up" : "Login"}
+          </button>
+        </form>
+
+        <div className="login-card-footer">
+          {isRegister ? "Already have an account?" : "Don't have an account?"}{" "}
+          <button
+            type="button"
+            className="link-like"
+            onClick={() => setIsRegister(!isRegister)}
+          >
+            {isRegister ? "Login" : "Register"}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

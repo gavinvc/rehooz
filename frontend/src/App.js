@@ -1,5 +1,7 @@
-import React, { useState } from "react";
+// src/App.js
+import React, { useState, useEffect } from "react";
 import { Routes, Route, Link, Navigate } from "react-router-dom";
+
 import rehooz_rectangle from "./rehooz-rectangle.png";
 import "./App.css";
 
@@ -11,53 +13,55 @@ import Browse from "./pages/Browse";
 import Connect from "./pages/Connect";
 import Login from "./pages/login";
 
-function PrivateRoute({ children, user }) {
+function PrivateRoute({ children }) {
+  const user = localStorage.getItem("user");
   return user ? children : <Navigate to="/" />;
 }
 
-function PublicRoute({ children, user }) {
+function PublicRoute({ children }) {
+  const user = localStorage.getItem("user");
   return user ? <Navigate to="/home" /> : children;
 }
 
 function App() {
-  const [user, setUser] = useState(() => {
-    const stored = localStorage.getItem("user");
-    return stored ? JSON.parse(stored) : null;
-  });
-
-  // controls hamburger dropdown on small screens
+  const [user, setUser] = useState(null);
   const [navOpen, setNavOpen] = useState(false);
+
+  useEffect(() => {
+    const stored = localStorage.getItem("user");
+    if (stored) {
+      setUser(JSON.parse(stored));
+    }
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem("user");
+    setUser(null);
+    window.location.href = "/";
+  };
 
   const closeNav = () => setNavOpen(false);
 
   return (
     <div className="App-container">
       <div className="App">
+        {/* Header shows only when logged in */}
         {user && (
           <header className="App-header">
             <div className="logo-box">
               <Link to="/home" onClick={closeNav}>
                 <img
                   src={rehooz_rectangle}
-                  className="rehooz-rectangle"
-                  alt="Rehooz logo"
+                  className="App-logo-image"
+                  alt="ReHooz logo"
                 />
               </Link>
             </div>
 
-            {/* Hamburger button (visible on small screens via CSS) */}
-            <button
-              className="Hamburger"
-              aria-label="Toggle navigation"
-              onClick={() => setNavOpen((open) => !open)}
+            <nav
+              className={`header-nav ${navOpen ? "nav-open" : ""}`}
+              aria-label="Main navigation"
             >
-              <span />
-              <span />
-              <span />
-            </button>
-
-            {/* Nav links – become dropdown on small screens */}
-            <nav className={`header-nav ${navOpen ? "nav-open" : ""}`}>
               <Link to="/profile" onClick={closeNav}>
                 <button className="Header-component">Profile</button>
               </Link>
@@ -73,7 +77,25 @@ function App() {
               <Link to="/connect" onClick={closeNav}>
                 <button className="Header-component">Connect</button>
               </Link>
+              {/* Optional: logout in dropdown on very small screens */}
+              <button
+                className="Header-component mobile-logout"
+                onClick={handleLogout}
+              >
+                Logout
+              </button>
             </nav>
+
+            <button
+              className={`Hamburger ${navOpen ? "is-open" : ""}`}
+              onClick={() => setNavOpen((prev) => !prev)}
+              aria-label="Toggle navigation menu"
+              aria-expanded={navOpen}
+            >
+              <span />
+              <span />
+              <span />
+            </button>
           </header>
         )}
 
@@ -81,16 +103,15 @@ function App() {
           <Route
             path="/"
             element={
-              <PublicRoute user={user}>
+              <PublicRoute>
                 <Login setUser={setUser} />
               </PublicRoute>
             }
           />
-
           <Route
             path="/home"
             element={
-              <PrivateRoute user={user}>
+              <PrivateRoute>
                 <Home />
               </PrivateRoute>
             }
@@ -98,7 +119,7 @@ function App() {
           <Route
             path="/profile"
             element={
-              <PrivateRoute user={user}>
+              <PrivateRoute>
                 <Profile />
               </PrivateRoute>
             }
@@ -106,7 +127,7 @@ function App() {
           <Route
             path="/listings"
             element={
-              <PrivateRoute user={user}>
+              <PrivateRoute>
                 <Listings />
               </PrivateRoute>
             }
@@ -114,7 +135,7 @@ function App() {
           <Route
             path="/offers"
             element={
-              <PrivateRoute user={user}>
+              <PrivateRoute>
                 <Offers />
               </PrivateRoute>
             }
@@ -122,7 +143,7 @@ function App() {
           <Route
             path="/browse"
             element={
-              <PrivateRoute user={user}>
+              <PrivateRoute>
                 <Browse />
               </PrivateRoute>
             }
@@ -130,15 +151,18 @@ function App() {
           <Route
             path="/connect"
             element={
-              <PrivateRoute user={user}>
-                <Connect user={user} />
+              <PrivateRoute>
+                <Connect />
               </PrivateRoute>
             }
           />
         </Routes>
 
         <footer className="App-footer">
-          <h5>This site is created as part of CS 4750 at the University of Virginia</h5>
+          <h5>
+            This site is created as part of CS 4750 at the University of
+            Virginia
+          </h5>
           <p>
             Created by Gavin Crigger, Caitlin Fram, Zara Masood, and Karina
             Yakubisin

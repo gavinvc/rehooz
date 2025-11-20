@@ -1,16 +1,22 @@
+/* ========================
+   BASIC APP LAYOUT
+   ======================== */
+
 .App {
   text-align: center;
   display: flex;
-  flex-direction: column; /* stack header, body, footer vertically */
-  flex: 1; /* allow .App to grow to fill .App-container height */
+  flex-direction: column;
+  flex: 1;
+  padding-bottom: 75px; /* leave space for fixed footer */
 }
 
-/* reserve space at the bottom so fixed footer doesn't cover content */
-.App {
-  padding-bottom: 75px; /* matches --footer-height below; adjust if you change height */
+.App-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
 }
 
-/* CSS variable for footer height — easier to keep spacing in sync */
+/* logo images */
 
 .rehooz-rectangle {
   width: 200px;
@@ -29,38 +35,64 @@
   }
 }
 
-.App-container {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-}
+/* ========================
+   HEADER + NAV BAR
+   ======================== */
 
 .App-header {
   background-color: #282c34;
-  min-height: 100px;
+  min-height: 80px;
   display: flex;
   align-items: center;
-  justify-content: right;
-  padding-right: 25px;
-  font-size: calc(10px + 2vmin);
+  justify-content: flex-end;
+  padding: 0 24px;
+  font-size: 16px;
   color: white;
   position: fixed;
   left: 0;
   right: 0;
   top: 0;
   box-sizing: border-box;
-  z-index: 1001; /* ensure header sits above page content */
+  z-index: 1001;
 }
+
+/* logo on the left */
+
+.logo-box {
+  position: absolute;
+  left: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 72px;
+  height: 72px;
+}
+
+.App-logo-image {
+  max-height: 85px;
+  max-width: 85px;
+  display: block;
+}
+
+/* desktop nav */
+
+.header-nav {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+/* pill-style header buttons */
 
 .Header-component {
   color: #282c34;
-  font-size: 17px;
-  min-width: 110px;
-  min-height: 45px;
-  margin-left: 18px;
+  font-size: 15px;
+  min-width: 120px;
+  min-height: 42px;
+  padding: 8px 18px;
   border: none;
-  border-radius: 25px;             /* smooth pill shape */
-  background: linear-gradient(145deg, #F5EEDC, #F5EEDC); /* modern navy tones */
+  border-radius: 999px;
+  background: linear-gradient(145deg, #f5eedc, #f5eedc);
   box-shadow: 0 3px 6px rgba(0, 0, 0, 0.25);
   cursor: pointer;
   transition: all 0.25s ease-in-out;
@@ -68,15 +100,168 @@
 }
 
 .Header-component:hover {
-  background: linear-gradient(145deg, #f5e9cb, #f5e9cb); /* reverse gradient */
-  transform: translateY(-2px);           /* lift on hover */
+  background: linear-gradient(145deg, #f5e9cb, #f5e9cb);
+  transform: translateY(-2px);
   box-shadow: 0 5px 10px rgba(0, 0, 0, 0.35);
 }
 
-.Listing-component {
-  display: flex;                /* make the two inner divs appear side by side */
+/* logout button shown only inside mobile dropdown */
+.mobile-logout {
+  display: none;
+}
+
+/* ========================
+   HAMBURGER (MOBILE)
+   ======================== */
+
+.Hamburger {
+  display: none; /* shown only on small screens */
+  flex-direction: column;
   justify-content: space-between;
-  align-items: flex-start;      /* align items at the top */
+  width: 28px;
+  height: 20px;
+  background: none;
+  border: none;
+  padding: 0;
+  margin-left: 12px;
+  cursor: pointer;
+}
+
+.Hamburger span {
+  display: block;
+  height: 3px;
+  border-radius: 2px;
+  background-color: #f5eedc;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+/* animate to an X when open */
+.Hamburger.is-open span:nth-child(1) {
+  transform: translateY(8px) rotate(45deg);
+}
+
+.Hamburger.is-open span:nth-child(2) {
+  opacity: 0;
+}
+
+.Hamburger.is-open span:nth-child(3) {
+  transform: translateY(-8px) rotate(-45deg);
+}
+
+/* mobile nav behaviour */
+
+@media (max-width: 950px) {
+  .App-header {
+    padding: 0 18px;
+  }
+
+  /* hide inline nav by default; use dropdown */
+  .header-nav {
+    display: none;
+    position: absolute;
+    top: 80px;       /* just below header */
+    right: 16px;
+    flex-direction: column;
+    gap: 10px;
+    background-color: #20232a;
+    padding: 14px 16px;
+    border-radius: 22px;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.45);
+    z-index: 1100;
+  }
+
+  .header-nav.nav-open {
+    display: flex;
+  }
+
+  .header-nav .Header-component {
+    width: 190px;
+    justify-content: center;
+    text-align: center;
+    margin-left: 0;
+  }
+
+  .Hamburger {
+    display: flex;
+  }
+
+  .mobile-logout {
+    display: inline-block;
+    background: linear-gradient(145deg, #ff7b47, #ff9561);
+    color: #fff;
+  }
+}
+
+/* ========================
+   PAGE BODY / CONTENT
+   ======================== */
+
+.App-body {
+  background: transparent; /* let the gradient from body show */
+  padding: calc(100px + 20px) 20px 20px 20px; /* clear fixed header */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex-grow: 1;
+}
+
+/* generic page content container (for non-Home pages) */
+.page-content {
+  padding-top: calc(100px + 24px);
+  padding-left: 24px;
+  padding-right: 24px;
+  padding-bottom: 24px;
+}
+
+main {
+  box-sizing: border-box;
+}
+
+/* ========================
+   FOOTER
+   ======================== */
+
+.App-footer {
+  background-color: #282c34;
+  height: 75px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  padding: 8px 12px;
+  gap: 4px;
+  box-sizing: border-box;
+  overflow: hidden;
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  z-index: 1000;
+}
+
+.App-footer h5,
+.App-footer p {
+  margin: 3px;
+  padding: 0;
+  gap: 5px;
+  box-sizing: border-box;
+}
+
+.App-link {
+  color: #61dafb;
+}
+
+/* ========================
+   LISTINGS / OFFERS ETC
+   ======================== */
+
+.Listing-component {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
   color: white;
   font-size: 18px;
   min-width: 300px;
@@ -90,12 +275,13 @@
 }
 
 .Listing-component .Component-column {
-  flex: 1;                       /* each column gets equal width */
+  flex: 1;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;       /* text aligns left nicely */
-  gap: 8px;                      /* space between h4, p, and button */
+  align-items: flex-start;
+  gap: 8px;
 }
+
 .Listing-component .Component-column h4 {
   padding-right: 20px;
 }
@@ -104,12 +290,11 @@
   padding-right: 20px;
 }
 
-
 .Listings-container {
   display: flex;
   flex-wrap: wrap;
   columns: 2;
-  gap: 48px; /* increased gap between columns */
+  gap: 48px;
   justify-content: center;
   margin-top: 20px;
 }
@@ -122,18 +307,7 @@
   border: 1px solid #ccc;
 }
 
-.Listings-column {
-  flex: 1;
-  min-width: 200px;
-  max-width: 500px;
-  margin-right: 40px;
-  margin-left: 40px;
-  display: flex;
-  flex-direction: column;
-  text-align: left;
-  gap: 16px;
-}
-
+.Listings-column,
 .Offers-column {
   flex: 1;
   min-width: 200px;
@@ -150,12 +324,13 @@
   display: flex;
   flex-wrap: wrap;
   columns: 2;
-  gap: 48px; /* increased gap between columns */
+  gap: 48px;
   justify-content: center;
   margin-top: 20px;
 }
 
-/* Scrollable box used under each column heading */
+/* scroll boxes on listings/offers/connect columns */
+
 .scroll-box {
   width: 100%;
   max-height: 1000px;
@@ -165,7 +340,7 @@
   border-radius: 8px;
   border: 1px solid #e0e0e0;
   padding: 12px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
   box-sizing: border-box;
 }
 
@@ -175,20 +350,19 @@
   color: #222;
 }
 
+/* action buttons */
+
 .Delete-listing {
   background-color: #ff4d4d;
   color: white;
   border: none;
   padding: 8px 12px;
   border-radius: 4px;
-  top: auto;
-  right: auto;
-  left: auto;
   cursor: pointer;
 }
 
 .Goto-listing {
-  background-color: #4CAF50;
+  background-color: #4caf50;
   color: white;
   border: none;
   padding: 8px 12px;
@@ -205,157 +379,7 @@
   cursor: pointer;
 }
 
-/* Logo box on the left of the header */
-.logo-box {
-  position: absolute;
-  left: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 72px;
-  height: 72px;
-}
-
-.App-logo-image {
-  max-height: 64px;
-  max-width: 64px;
-  display: block;
-}
-
-/* header nav keeps buttons centered */
-.header-nav {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-}
-
-.Header-component:hover {
-  background-color: darkblue;
-}
-
-.App-body {
-  background-color: #f0f0f0;
-  /* add top padding so fixed header doesn't overlap content */
-  padding: calc(100px + 20px) 20px 20px 20px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  flex-grow: 1;
-}
-
-/* generic page content container for routed pages (non-Home) */
-.page-content {
-  padding-top: calc(100px + 24px); /* account for header height + small gutter */
-  padding-left: 24px;
-  padding-right: 24px;
-  padding-bottom: 24px;
-}
-
-/* fallback for pages that used <main> directly */
-main {
-  /* only apply top spacing if no other padding/layout is set */
-  box-sizing: border-box;
-}
-
-.App-footer {
-  background-color: #282c34;
-  height: 75px;
-  display: flex;
-  flex-direction: column; /* stack children vertically */
-  align-items: center;
-  justify-content: center;
-  color: white;
-  padding: 8px 12px;
-  gap: 4px;
-  box-sizing: border-box;
-  overflow: hidden;
-
-  /* fixed to viewport bottom */
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  width: 100%;
-  z-index: 1000;
-}
-
-/* Make sure the heading and paragraph inside the footer don't add extra spacing */
-.App-footer h5,
-.App-footer p {
-  margin: 3px;
-  padding: 0;
-  gap: 5px;
-  box-sizing: border-box;
-}
-
-.App-link {
-  color: #61dafb;
-}
-
-/* ===================== */
-/*  HAMBURGER / RESPONSIVE NAV  */
-/* ===================== */
-
-/* Base hamburger styling (hidden on large screens) */
-.Hamburger {
-  display: none;
-  flex-direction: column;
-  justify-content: space-between;
-  width: 28px;
-  height: 20px;
-  background: none;
-  border: none;
-  padding: 0;
-  margin-left: 12px;
-  margin-right: 8px;
-  cursor: pointer;
-}
-
-.Hamburger span {
-  display: block;
-  height: 3px;
-  border-radius: 2px;
-  background-color: #f5eedc; /* match header button tone */
-}
-
-/* On smaller screens, switch to hamburger + dropdown nav */
-@media (max-width: 950px) {
-  .App-header {
-    justify-content: flex-end;
-    padding-right: 16px;
-  }
-
-  .Hamburger {
-    display: flex;
-  }
-
-  /* hide inline nav by default */
-  .header-nav {
-    display: none;
-    position: absolute;
-    top: 100%;         /* just below header */
-    right: 8px;
-    flex-direction: column;
-    gap: 8px;
-    background-color: #282c34;
-    padding: 10px 12px;
-    border-radius: 12px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-    z-index: 1100;
-  }
-
-  /* when React adds nav-open class, show dropdown */
-  .header-nav.nav-open {
-    display: flex;
-  }
-
-  .header-nav .Header-component {
-    width: 100%;
-    text-align: left;
-    margin-left: 0;
-  }
-}
+/* ======================== */
 
 @keyframes App-logo-spin {
   from {
