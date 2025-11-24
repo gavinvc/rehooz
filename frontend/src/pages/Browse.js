@@ -6,23 +6,34 @@ export default function Browse() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    // Fetch all listings - backend endpoint may be 'get_all_listings.php'
-    // If your backend uses a different route, update the URL below.
-    const url = 'https://rehooz-app-491933218528.us-east4.run.app/backend/get_all_listings.php';
+    const url =
+      "https://rehooz-app-491933218528.us-east4.run.app/backend/get_all_listings.php";
 
     fetch(url)
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP error: ${res.status}`);
+        return res.json();
+      })
       .then((data) => {
-        if (data.status === 'success' && Array.isArray(data.listings)) {
+        console.log("Fetched listings:", data);
+
+        // Expected format:
+        // { status: "success", listings: [...] }
+        if (data.status === "success" && Array.isArray(data.listings)) {
           setListings(data.listings);
-        } else {
-          // if backend uses a different shape, try common alternatives
-          if (Array.isArray(data)) setListings(data);
+        }
+        // Fallback: backend returns raw array
+        else if (Array.isArray(data)) {
+          setListings(data);
+        }
+        // Failure case
+        else {
+          setError("Unexpected response format from server.");
         }
       })
       .catch((err) => {
-        console.warn('Failed to fetch listings', err);
-        setError('Failed to load listings.');
+        console.warn("Failed to fetch listings", err);
+        setError("Failed to load listings.");
       })
       .finally(() => setLoading(false));
   }, []);
@@ -39,24 +50,34 @@ export default function Browse() {
         <p>No listings available.</p>
       ) : (
         <div className="Listings-container">
-          <div className="Listings-column" style={{ maxWidth: '820px' }}>
+          <div className="Listings-column" style={{ maxWidth: "820px" }}>
             <h3 className="column-title">All Listings</h3>
+
             <div className="scroll-box" aria-label="All listings">
               {listings.map((item) => (
                 <div key={item.listing_id || item.id} className="Listing-component">
                   <div className="listing-content">
                     <h4>{item.name || item.title}</h4>
                     <p>{item.description}</p>
-                    <p style={{ marginTop: '8px' }}>
-                      <strong>${item.price ? parseFloat(item.price).toFixed(2) : '0.00'}</strong>
-                      {item.location ? ` • ${item.location}` : ''}
+
+                    <p style={{ marginTop: "8px" }}>
+                      <strong>
+                        $
+                        {item.price
+                          ? parseFloat(item.price).toFixed(2)
+                          : "0.00"}
+                      </strong>
+                      {item.location ? ` • ${item.location}` : ""}
                     </p>
                   </div>
-                  {/*<img
+
+                  {/* Image support (optional)
+                  <img
                     className="listing-image"
-                    src={`https://www.cs.virginia.edu/~zha4ub/rehooz/photos/${item.photo || 'default.jpg'}`}
-                    alt={item.name || item.title || 'listing'}
-                  />*/}
+                    src={`https://www.cs.virginia.edu/~zha4ub/rehooz/photos/${item.photo || "default.jpg"}`}
+                    alt={item.name || item.title || "listing"}
+                  />
+                  */}
                 </div>
               ))}
             </div>
