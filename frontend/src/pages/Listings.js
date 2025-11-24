@@ -45,7 +45,7 @@ export default function Listings() {
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ user_id: user.user_id, listing_id }),
+        body: JSON.stringify({ user_id: user.user_id, listing_id: listing_id }),
       }
     );
 

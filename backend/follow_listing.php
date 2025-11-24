@@ -35,7 +35,7 @@ if ($check->num_rows > 0) {
 $check->close();
 
 // Insert follow
-$stmt = $conn->prepare("INSERT INTO Follows (user_id, listing_id, date) VALUES (?, ?, NOW())");
+$stmt = $conn->prepare("INSERT INTO Follows (user_id, listing_id) VALUES (?, ?)");
 $stmt->bind_param("ii", $userId, $listingId);
 
 if ($stmt->execute()) {

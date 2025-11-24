@@ -50,7 +50,7 @@ export default function Browse() {
     setLoading(false);
   }, []);
 
-  const handleFollow = async (listing_id) => {
+  const handleFollow = async (id) => {
     if (!user) return alert("You must be logged in.");
 
     const res = await fetch(
@@ -58,7 +58,7 @@ export default function Browse() {
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ user_id: user.user_id, listing_id }),
+        body: JSON.stringify({ user_id: user.user_id, listing_id: id }),
       }
     );
 
@@ -69,7 +69,7 @@ export default function Browse() {
   };
 
   /* --------------------------- UNFOLLOW A LISTING --------------------------- */
-  const handleUnfollow = async (listing_id) => {
+  const handleUnfollow = async (id) => {
     if (!user) return alert("You must be logged in.");
 
     const res = await fetch(
@@ -77,7 +77,7 @@ export default function Browse() {
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ user_id: user.user_id, listing_id }),
+        body: JSON.stringify({ user_id: user.user_id, listing_id: id }),
       }
     );
 
