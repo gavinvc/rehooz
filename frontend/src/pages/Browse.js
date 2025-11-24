@@ -104,7 +104,7 @@ export default function Browse() {
 
             <div className="scroll-box" aria-label="All listings">
               {listings.map((item) => {
-                const id = item.listing_id || item.id;
+                const id = item.listing_id;
 
                 const isFollowed = followed.includes(id);
 
