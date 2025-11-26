@@ -151,11 +151,7 @@ function App() {
           />
           <Route
             path="/listing/:listingId"
-            element={
-              <PrivateRoute>
-                <Listing />
-              </PrivateRoute>
-            }
+            element={<Listing />}
           />
           <Route
             path="/connect"
