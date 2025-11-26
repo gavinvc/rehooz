@@ -6,9 +6,14 @@ export default function Browse() {
   const [followed, setFollowed] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState([]);
+  const [locationSearch, setLocationSearch] = useState("");
+  const [submittedLocation, setSubmittedLocation] = useState("");
+  const [descriptionSearch, setDescriptionSearch] = useState("");
+  const [submittedDescription, setSubmittedDescription] = useState("");
   const [searchLoading, setSearchLoading] = useState(false);
+  const [priceMin, setPriceMin] = useState(null);
+  const [priceMax, setPriceMax] = useState(null);
+  const [isPriceFilterOpen, setIsPriceFilterOpen] = useState(false);
 
   const [form, setForm] = useState({ name: "", price: "", description: "", location: "" });
   const [message, setMessage] = useState("");
@@ -19,6 +24,31 @@ export default function Browse() {
     return stored ? JSON.parse(stored) : null;
   }, []);
   const userId = user?.user_id;
+  const priceBounds = useMemo(() => {
+    if (!listings.length) {
+      return { min: 0, max: 0 };
+    }
+
+    let min = Number.POSITIVE_INFINITY;
+    let max = Number.NEGATIVE_INFINITY;
+
+    listings.forEach((item) => {
+      const value = parseFloat(item.price);
+      if (Number.isFinite(value)) {
+        min = Math.min(min, value);
+        max = Math.max(max, value);
+      }
+    });
+
+    if (!Number.isFinite(min) || !Number.isFinite(max)) {
+      return { min: 0, max: 0 };
+    }
+
+    return {
+      min: Math.floor(min),
+      max: Math.ceil(max),
+    };
+  }, [listings]);
 
   const fetchListings = useCallback(async () => {
     setError(null);
@@ -69,6 +99,17 @@ export default function Browse() {
     fetchFollowed();
   }, [fetchFollowed]);
 
+  useEffect(() => {
+    if (!listings.length) {
+      setPriceMin(null);
+      setPriceMax(null);
+      return;
+    }
+
+    setPriceMin((prev) => (prev === null ? priceBounds.min : prev));
+    setPriceMax((prev) => (prev === null ? priceBounds.max : prev));
+  }, [listings.length, priceBounds.min, priceBounds.max]);
+
   const handleFollow = async (id) => {
     if (!userId) return alert("You must be logged in.");
 
@@ -91,24 +132,18 @@ export default function Browse() {
     }
   };
 
-  const handleSearch = async (e) => {
+  const handleLocationSearch = (e) => {
     e.preventDefault();
-    const query = searchQuery.trim();
-    if (!query) {
-      setSearchResults([]);
-      return;
-    }
+    setSearchLoading(true);
+    setSubmittedLocation(locationSearch.trim());
+    setTimeout(() => setSearchLoading(false), 120);
+  };
 
-    try {
-      setSearchLoading(true);
-      const normalized = query.toLowerCase();
-      const results = listings.filter((item) =>
-        item.location?.toLowerCase().includes(normalized)
-      );
-      setSearchResults(results);
-    } finally {
-      setSearchLoading(false);
-    }
+  const handleDescriptionSearch = (e) => {
+    e.preventDefault();
+    setSearchLoading(true);
+    setSubmittedDescription(descriptionSearch.trim());
+    setTimeout(() => setSearchLoading(false), 120);
   };
 
   const handleSubmit = async (e) => {
@@ -208,6 +243,70 @@ export default function Browse() {
     );
   };
 
+  const effectivePriceRange = useMemo(() => {
+    if (!listings.length) {
+      return { min: 0, max: 0 };
+    }
+
+    const resolvedMin = priceMin ?? priceBounds.min;
+    const resolvedMax = priceMax ?? priceBounds.max;
+
+    return {
+      min: Math.min(resolvedMin, resolvedMax),
+      max: Math.max(resolvedMin, resolvedMax),
+    };
+  }, [listings.length, priceMin, priceMax, priceBounds.min, priceBounds.max]);
+
+  const visibleListings = useMemo(() => {
+    if (!listings.length) return [];
+    if (!isPriceFilterOpen) return listings;
+    return listings.filter((item) => {
+      const value = parseFloat(item.price);
+      return (
+        Number.isFinite(value) &&
+        value >= effectivePriceRange.min &&
+        value <= effectivePriceRange.max
+      );
+    });
+  }, [listings, isPriceFilterOpen, effectivePriceRange.min, effectivePriceRange.max]);
+
+  const filteredSearchResults = useMemo(() => {
+    const locationTerm = submittedLocation.trim().toLowerCase();
+    const descriptionTerm = submittedDescription.trim().toLowerCase();
+    if (!locationTerm && !descriptionTerm) return [];
+
+    return listings.filter((item) => {
+      const matchesLocation = locationTerm
+        ? item.location?.toLowerCase().includes(locationTerm)
+        : true;
+      const matchesDescription = descriptionTerm
+        ? item.description?.toLowerCase().includes(descriptionTerm)
+        : true;
+      const value = parseFloat(item.price);
+      const withinPrice =
+        !isPriceFilterOpen ||
+        (Number.isFinite(value) &&
+          value >= effectivePriceRange.min &&
+          value <= effectivePriceRange.max);
+
+      return matchesLocation && matchesDescription && withinPrice;
+    });
+  }, [
+    listings,
+    submittedLocation,
+    submittedDescription,
+    isPriceFilterOpen,
+    effectivePriceRange.min,
+    effectivePriceRange.max,
+  ]);
+
+  const priceFilterDisabled = priceBounds.min === priceBounds.max;
+
+  const resetPriceFilters = () => {
+    setPriceMin(null);
+    setPriceMax(null);
+  };
+
   return (
     <main className="page-content browse-page">
       <div className="browse-inner">
@@ -225,28 +324,189 @@ export default function Browse() {
           </button>
         </div>
 
-        <section className="connect-search-section browse-search-section">
-          <form className="connect-search-form" onSubmit={handleSearch}>
-            <input
-              type="text"
-              className="connect-search-input"
-              placeholder="Search by location"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-            <button type="submit" className="connect-search-btn">
-              Search
-            </button>
-          </form>
+        <section className="browse-filters-section">
+          <div className="browse-filters-row">
+            <div className="browse-price-filter-wrapper">
+              <button
+                type="button"
+                className="browse-filter-toggle"
+                onClick={() => {
+                  const next = !isPriceFilterOpen;
+                  setIsPriceFilterOpen(next);
+                  if (!next) {
+                    resetPriceFilters();
+                  } else {
+                    setPriceMin((prev) => prev ?? priceBounds.min);
+                    setPriceMax((prev) => prev ?? priceBounds.max);
+                  }
+                }}
+              >
+                {isPriceFilterOpen ? "Hide Price Filter" : "Show Price Filter"}
+              </button>
+
+              {isPriceFilterOpen && (
+                <div className="browse-price-filter">
+                  <div className="browse-price-header">
+                    <span>Price range</span>
+                    {listings.length > 0 && (
+                      <span>
+                        ${effectivePriceRange.min.toFixed(2)} – ${
+                          effectivePriceRange.max.toFixed(2)
+                        }
+                      </span>
+                    )}
+                  </div>
+
+                  <div className="browse-price-inputs">
+                    <label>
+                      <span>Min</span>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min={priceBounds.min}
+                        max={priceBounds.max}
+                        disabled={priceFilterDisabled || !listings.length}
+                        value={priceMin ?? ""}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          if (value === "") {
+                            setPriceMin(null);
+                            return;
+                          }
+                          const num = Number(value);
+                          if (Number.isNaN(num)) return;
+                          const upper = priceMax ?? priceBounds.max;
+                          const clamped = Math.min(
+                            Math.max(num, priceBounds.min),
+                            upper
+                          );
+                          setPriceMin(clamped);
+                        }}
+                      />
+                    </label>
+
+                    <label>
+                      <span>Max</span>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min={priceBounds.min}
+                        max={priceBounds.max}
+                        disabled={priceFilterDisabled || !listings.length}
+                        value={priceMax ?? ""}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          if (value === "") {
+                            setPriceMax(null);
+                            return;
+                          }
+                          const num = Number(value);
+                          if (Number.isNaN(num)) return;
+                          const lower = priceMin ?? priceBounds.min;
+                          const clamped = Math.max(
+                            Math.min(num, priceBounds.max),
+                            lower
+                          );
+                          setPriceMax(clamped);
+                        }}
+                      />
+                    </label>
+                  </div>
+
+                  <div className="browse-price-sliders">
+                    <input
+                      type="range"
+                      min={priceBounds.min}
+                      max={priceBounds.max}
+                      step="0.5"
+                      disabled={priceFilterDisabled || !listings.length}
+                      value={
+                        priceMin === null
+                          ? priceBounds.min
+                          : Math.min(priceMin, priceBounds.max)
+                      }
+                      onChange={(e) => {
+                        const num = Number(e.target.value);
+                        if (Number.isNaN(num)) return;
+                        const upper = priceMax ?? priceBounds.max;
+                        setPriceMin(Math.min(num, upper));
+                      }}
+                    />
+                    <input
+                      type="range"
+                      min={priceBounds.min}
+                      max={priceBounds.max}
+                      step="0.5"
+                      disabled={priceFilterDisabled || !listings.length}
+                      value={
+                        priceMax === null
+                          ? priceBounds.max
+                          : Math.max(priceMax, priceBounds.min)
+                      }
+                      onChange={(e) => {
+                        const num = Number(e.target.value);
+                        if (Number.isNaN(num)) return;
+                        const lower = priceMin ?? priceBounds.min;
+                        setPriceMax(Math.max(num, lower));
+                      }}
+                    />
+                  </div>
+
+                  <button
+                    type="button"
+                    className="browse-clear-btn"
+                    onClick={resetPriceFilters}
+                  >
+                    Reset price filter
+                  </button>
+                </div>
+              )}
+            </div>
+            <form className="browse-inline-form" onSubmit={handleDescriptionSearch}>
+              <label>
+                <span>Description</span>
+                <div className="browse-inline-input">
+                  <input
+                    type="text"
+                    placeholder="Search by description"
+                    value={descriptionSearch}
+                    onChange={(e) => setDescriptionSearch(e.target.value)}
+                  />
+                  <button type="submit">Search</button>
+                </div>
+              </label>
+            </form>
+
+            <form className="browse-inline-form" onSubmit={handleLocationSearch}>
+              <label>
+                <span>City</span>
+                <div className="browse-inline-input">
+                  <input
+                    type="text"
+                    placeholder="Search by city"
+                    value={locationSearch}
+                    onChange={(e) => setLocationSearch(e.target.value)}
+                  />
+                  <button type="submit">Search</button>
+                </div>
+              </label>
+            </form>
+          </div>
 
           {searchLoading && <p className="connect-loading">Loading…</p>}
 
-          {searchResults.length > 0 && (
+          {(submittedLocation || submittedDescription) && (
             <div className="connect-search-results">
               <h3>Search Results</h3>
-              <div className="scroll-box" aria-label="Search results">
-                {searchResults.map(renderListingCard)}
-              </div>
+              {filteredSearchResults.length === 0 ? (
+                <p className="browse-search-empty">
+                  No listings match those filters.
+                </p>
+              ) : (
+                <div className="scroll-box" aria-label="Search results">
+                  {filteredSearchResults.map(renderListingCard)}
+                </div>
+              )}
             </div>
           )}
         </section>
@@ -317,7 +577,11 @@ export default function Browse() {
             <h3 className="column-title">All Listings</h3>
 
             <div className="scroll-box" aria-label="All listings">
-              {listings.map(renderListingCard)}
+              {visibleListings.length === 0 ? (
+                <p>No listings in this price range.</p>
+              ) : (
+                visibleListings.map(renderListingCard)
+              )}
             </div>
           </div>
         )}

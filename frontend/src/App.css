@@ -462,8 +462,146 @@ main {
   width: 100%;
 }
 
-.browse-search-section {
+.browse-filters-section {
   margin-bottom: 32px;
+}
+
+.browse-filters-row {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+
+.browse-inline-form {
+  flex: 1 1 240px;
+}
+
+.browse-inline-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 14px;
+  color: #4b5563;
+}
+
+.browse-inline-input {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.browse-inline-input input {
+  flex: 1;
+  border-radius: 12px;
+  border: 1px solid #d1d5db;
+  padding: 10px 12px;
+  font-size: 15px;
+}
+
+.browse-inline-input button {
+  border: none;
+  border-radius: 999px;
+  padding: 10px 18px;
+  background: linear-gradient(135deg, #ff7b45, #ff5e3a);
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 8px 18px rgba(255, 126, 71, 0.35);
+}
+
+.browse-price-filter-wrapper {
+  margin-top: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 0 0 220px;
+}
+
+.browse-filter-toggle {
+  align-self: flex-start;
+  border: none;
+  border-radius: 999px;
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #ff7b45, #ff5e3a);
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 8px 18px rgba(255, 126, 71, 0.35);
+}
+
+.browse-filter-toggle:hover {
+  transform: translateY(-1px);
+}
+
+.browse-price-filter {
+  margin-top: 18px;
+  padding: 16px 18px;
+  border-radius: 18px;
+  background: #f9fafb;
+  box-shadow: 0 8px 22px rgba(15, 23, 42, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.browse-price-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 600;
+  color: #111827;
+}
+
+.browse-price-inputs {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+
+.browse-price-inputs label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 14px;
+  color: #4b5563;
+  flex: 1 1 140px;
+}
+
+.browse-price-inputs input {
+  border-radius: 12px;
+  border: 1px solid #d1d5db;
+  padding: 8px 10px;
+  font-size: 15px;
+}
+
+.browse-price-sliders {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.browse-price-sliders input[type="range"] {
+  accent-color: #ff7b45;
+}
+
+.browse-clear-btn {
+  border: none;
+  background: none;
+  color: #ff6a3d;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+}
+
+.browse-clear-btn:hover {
+  text-decoration: underline;
+}
+
+.browse-search-empty {
+  font-size: 14px;
+  color: #6b7280;
+  margin: 12px 0 0;
 }
 
 /* ======================== */
