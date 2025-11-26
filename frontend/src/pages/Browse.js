@@ -120,7 +120,7 @@ export default function Browse() {
                       </p>
                     </div>
 
-                    <div className="Component-column">
+                    <div className="Component-column listing-actions">
                       {user ? (
                         isFollowed ? (
                           <button

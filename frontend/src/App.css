@@ -258,78 +258,38 @@ main {
    LISTINGS / OFFERS ETC
    ======================== */
 
-.Listing-component {
+.listings-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  color: white;
-  font-size: 18px;
-  min-width: 300px;
-  min-height: 100px;
-  background-color: navy;
-  border: 3px solid grey;
-  border-radius: 5px;
-  padding: 15px;
-  margin: 5px;
-  margin-top: 10px;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
 }
 
-.Listing-component .Component-column {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 8px;
-}
-
-.Listing-component .Component-column h4 {
-  padding-right: 20px;
-}
-
-.Listing-component .Component-column p {
-  padding-right: 20px;
-}
-
-.Listings-container {
+.Listings-container,
+.Offers-container {
   display: flex;
   flex-wrap: wrap;
-  columns: 2;
-  gap: 48px;
+  gap: 32px;
   justify-content: center;
-  margin-top: 20px;
-}
-
-.Listing-image {
-  max-width: 200px;
-  max-height: 300px;
-  object-fit: cover;
-  border-radius: 8px;
-  border: 1px solid #ccc;
+  align-items: flex-start;
+  margin-top: 28px;
 }
 
 .Listings-column,
 .Offers-column {
-  flex: 1;
-  min-width: 200px;
-  max-width: 500px;
-  margin-right: 40px;
-  margin-left: 40px;
+  flex: 1 1 320px;
+  max-width: 440px;
+  min-width: 260px;
+  background: #ffffff;
+  border-radius: 28px;
+  padding: 24px 28px;
+  box-shadow: 0 18px 42px rgba(15, 23, 42, 0.12);
   display: flex;
   flex-direction: column;
-  text-align: left;
   gap: 16px;
+  text-align: left;
 }
-
-.Offers-container {
-  display: flex;
-  flex-wrap: wrap;
-  columns: 2;
-  gap: 48px;
-  justify-content: center;
-  margin-top: 20px;
-}
-
-/* scroll boxes on listings/offers/connect columns */
 
 .scroll-box {
   width: 100%;
@@ -337,37 +297,128 @@ main {
   height: 320px;
   overflow-y: auto;
   background: #ffffff;
-  border-radius: 8px;
-  border: 1px solid #e0e0e0;
-  padding: 12px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  border-radius: 16px;
+  border: 1px solid #e5e7eb;
+  padding: 16px;
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
   box-sizing: border-box;
+}
+
+.Listings-column .scroll-box,
+.Offers-column .scroll-box {
+  background: transparent;
+  border: none;
+  padding: 0;
+  box-shadow: none;
+  height: auto;
+  max-height: 440px;
+}
+
+.Listing-component {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 18px;
+  color: #111827;
+  font-size: 16px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 22px;
+  padding: 18px 20px;
+  margin-bottom: 16px;
+  box-shadow: 0 14px 34px rgba(15, 23, 42, 0.12);
+}
+
+.Listing-component:last-child {
+  margin-bottom: 0;
+}
+
+.listing-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.listing-content h4 {
+  margin: 0;
+  font-size: 18px;
+  color: #0f172a;
+}
+
+.listing-content p {
+  margin: 0;
+  color: #4b5563;
+  line-height: 1.4;
+}
+
+.Listing-component strong {
+  font-size: 17px;
+  color: #0f172a;
+}
+
+.Component-column {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.listing-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: flex-end;
+  justify-content: flex-end;
+}
+
+.Listing-image {
+  max-width: 200px;
+  max-height: 300px;
+  object-fit: cover;
+  border-radius: 18px;
+  border: 1px solid #e5e7eb;
 }
 
 .column-title {
   margin: 0;
   font-size: 20px;
-  color: #222;
+  color: #111827;
 }
 
 /* action buttons */
 
+.Goto-listing,
 .Delete-listing {
-  background-color: #ff4d4d;
-  color: white;
   border: none;
-  padding: 8px 12px;
-  border-radius: 4px;
+  padding: 10px 20px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 600;
   cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
 }
 
 .Goto-listing {
-  background-color: #4caf50;
-  color: white;
-  border: none;
-  padding: 8px 12px;
-  border-radius: 4px;
-  cursor: pointer;
+  background: linear-gradient(135deg, #ff7b45, #ff5e3a);
+  color: #ffffff;
+  box-shadow: 0 10px 24px rgba(255, 126, 71, 0.45);
+}
+
+.Goto-listing:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 34px rgba(255, 126, 71, 0.55);
+}
+
+.Delete-listing {
+  background: #fff4f4;
+  color: #d92d20;
+  border: 1px solid #ffd1d1;
+  box-shadow: 0 6px 16px rgba(217, 45, 32, 0.15);
+}
+
+.Delete-listing:hover {
+  transform: translateY(-2px);
+  background: #ffe3e3;
 }
 
 .add-listing-btn {
@@ -382,15 +433,6 @@ main {
 .add-listing-btn:hover {
   transform: translateY(-1px);
   box-shadow: 0 12px 28px rgba(255, 126, 71, 0.45);
-}
-
-.Unfollow-listing {
-  background-color: #ff9900;
-  color: white;
-  border: none;
-  padding: 8px 12px;
-  border-radius: 4px;
-  cursor: pointer;
 }
 
 /* ======================== */

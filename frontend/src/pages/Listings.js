@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import rehooz_square from "../rehooz-square.png";
 
 export default function Listings() {
@@ -8,68 +8,105 @@ export default function Listings() {
   const [message, setMessage] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const user = JSON.parse(localStorage.getItem("user"));
+  const user = useMemo(() => {
+    const stored = localStorage.getItem("user");
+    return stored ? JSON.parse(stored) : null;
+  }, []);
+  const userId = user?.user_id;
 
-  /* FETCH MY LISTINGS */
+  const fetchMyListings = useCallback(async () => {
+    if (!userId) return;
+    try {
+      const res = await fetch(
+        `https://rehooz-app-491933218528.us-east4.run.app/backend/get_my_listings.php?user_id=${userId}`
+      );
+      const data = await res.json();
+      if (data.status === "success") setMyListings(data.listings);
+    } catch (err) {
+      console.error("My listings fetch error:", err);
+    }
+  }, [userId]);
+
+  const fetchFollowedListings = useCallback(async () => {
+    if (!userId) return;
+    try {
+      const res = await fetch(
+        `https://rehooz-app-491933218528.us-east4.run.app/backend/get_followed_listings.php?user_id=${userId}`
+      );
+      const data = await res.json();
+      if (data.status === "success") setFollowedListings(data.listings);
+    } catch (err) {
+      console.error("Followed listings fetch error:", err);
+    }
+  }, [userId]);
+
   useEffect(() => {
-    if (!user) return;
+    fetchMyListings();
+  }, [fetchMyListings]);
 
-    fetch(
-      `https://rehooz-app-491933218528.us-east4.run.app/backend/get_my_listings.php?user_id=${user.user_id}`
-    )
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.status === "success") setMyListings(data.listings);
-      })
-      .catch((err) => console.error("My listings fetch error:", err));
-  }, [user]);
-
-  /* FETCH FOLLOWED LISTINGS */
   useEffect(() => {
-    if (!user) return;
-
-    fetch(
-      `https://rehooz-app-491933218528.us-east4.run.app/backend/get_followed_listings.php?user_id=${user.user_id}`
-    )
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.status === "success") setFollowedListings(data.listings);
-      })
-      .catch((err) => console.error("Followed listings fetch error:", err));
-  }, [user]);
+    fetchFollowedListings();
+  }, [fetchFollowedListings]);
 
   /* UNFOLLOW */
   const unfollowListing = async (listing_id) => {
+    if (!userId) return;
+
     const res = await fetch(
       `https://rehooz-app-491933218528.us-east4.run.app/backend/unfollow_listing.php`,
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ user_id: user.user_id, listing_id: listing_id }),
+        body: JSON.stringify({ user_id: userId, listing_id: listing_id }),
       }
     );
 
     const data = await res.json();
     console.log(data.message);
 
-    // Refresh followed listings column
-    const refreshed = await fetch(
-      `https://rehooz-app-491933218528.us-east4.run.app/backend/get_followed_listings.php?user_id=${user.user_id}`
-    );
-    const refreshedData = await refreshed.json();
-    if (refreshedData.status === "success") setFollowedListings(refreshedData.listings);
+    await fetchFollowedListings();
+  };
+
+  const deleteListing = async (listing_id) => {
+    if (!userId) return;
+
+    try {
+      const res = await fetch(
+        `https://rehooz-app-491933218528.us-east4.run.app/backend/delete_listing.php`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ user_id: userId, listing_id }),
+        }
+      );
+
+      const data = await res.json();
+      setMessage(data.message ?? "");
+
+      if (data.status === "success") {
+        await Promise.all([fetchMyListings(), fetchFollowedListings()]);
+      }
+    } catch (err) {
+      console.error("Delete listing error:", err);
+      setMessage("Unable to delete listing. Please try again.");
+    }
   };
 
   /*  ADD LISTING */
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    if (!userId) {
+      setMessage("Please sign in again to add a listing.");
+      return;
+    }
+
     const res = await fetch(
       "https://rehooz-app-491933218528.us-east4.run.app/backend/add_listing.php",
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, seller_id: user.user_id }),
+        body: JSON.stringify({ ...form, seller_id: userId }),
       }
     );
 
@@ -79,19 +116,14 @@ export default function Listings() {
     if (data.status === "success") {
       setForm({ name: "", price: "", description: "", location: "" });
 
-      // Refresh my listings
-      const refreshed = await fetch(
-        `https://rehooz-app-491933218528.us-east4.run.app/backend/get_my_listings.php?user_id=${user.user_id}`
-      );
-      const refreshedData = await refreshed.json();
-      setMyListings(refreshedData.listings);
+      fetchMyListings();
     }
   };
 
   return (
     <main className="page-content">
       {/* HEADER ROW */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "16px" }}>
+      <div className="listings-header">
         <h2>Listings</h2>
         <button
           type="button"
@@ -170,14 +202,19 @@ export default function Listings() {
             ) : (
               myListings.map((item) => (
                 <div key={item.listing_id} className="Listing-component">
-                  <div className="Component-column">
+                  <div className="listing-content">
                     <h4>{item.name}</h4>
                     <p>{item.description}</p>
                     <p><strong>${parseFloat(item.price).toFixed(2)}</strong></p>
                     <button className="Goto-listing">Go to</button>
                   </div>
-                  <div className="Component-column">
-                    <button className="Delete-listing">Delete</button>
+                  <div className="Component-column listing-actions">
+                    <button
+                      className="Delete-listing"
+                      onClick={() => deleteListing(item.listing_id)}
+                    >
+                      Delete
+                    </button>
                   </div>
                 </div>
               ))
@@ -194,14 +231,14 @@ export default function Listings() {
             ) : (
               followedListings.map((item) => (
                 <div key={item.listing_id} className="Listing-component">
-                  <div className="Component-column">
+                  <div className="listing-content">
                     <h4>{item.name}</h4>
                     <p>{item.description}</p>
                     <p><strong>${parseFloat(item.price).toFixed(2)}</strong></p>
                     <button className="Goto-listing">Go to</button>
                   </div>
 
-                  <div className="Component-column">
+                  <div className="Component-column listing-actions">
                     <button
                       className="Delete-listing"
                       onClick={() => unfollowListing(item.listing_id)}
