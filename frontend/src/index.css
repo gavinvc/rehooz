@@ -26,6 +26,9 @@ body {
     #f6f3f6 40%,
     #ecf1f8 100%
   );
+  background-attachment: fixed;
+  background-size: cover;
+  background-repeat: no-repeat;
   color: #111827;
 }
 

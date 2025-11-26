@@ -435,6 +435,37 @@ main {
   box-shadow: 0 12px 28px rgba(255, 126, 71, 0.45);
 }
 
+.browse-page {
+  display: flex;
+  justify-content: center;
+}
+
+.browse-inner {
+  width: min(960px, 100%);
+  margin: 0 auto;
+}
+
+.browse-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.browse-header-row h2 {
+  margin: 0;
+}
+
+.browse-listings-card {
+  max-width: none;
+  width: 100%;
+}
+
+.browse-search-section {
+  margin-bottom: 32px;
+}
+
 /* ======================== */
 
 @keyframes App-logo-spin {
