@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import rehooz_square from "../rehooz-square.png";
 
 export default function Browse() {
@@ -217,6 +218,9 @@ export default function Browse() {
         </div>
 
         <div className="Component-column listing-actions">
+          <Link className="view-listing-link" to={`/listing/${id}`}>
+            View listing
+          </Link>
           {user ? (
             isFollowed ? (
               <button

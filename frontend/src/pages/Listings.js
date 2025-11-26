@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import rehooz_square from "../rehooz-square.png";
 
 export default function Listings() {
@@ -206,7 +207,12 @@ export default function Listings() {
                     <h4>{item.name}</h4>
                     <p>{item.description}</p>
                     <p><strong>${parseFloat(item.price).toFixed(2)}</strong></p>
-                    <button className="Goto-listing">Go to</button>
+                    <Link
+                      className="view-listing-link"
+                      to={`/listing/${item.listing_id}`}
+                    >
+                      View listing
+                    </Link>
                   </div>
                   <div className="Component-column listing-actions">
                     <button
@@ -235,7 +241,12 @@ export default function Listings() {
                     <h4>{item.name}</h4>
                     <p>{item.description}</p>
                     <p><strong>${parseFloat(item.price).toFixed(2)}</strong></p>
-                    <button className="Goto-listing">Go to</button>
+                    <Link
+                      className="view-listing-link"
+                      to={`/listing/${item.listing_id}`}
+                    >
+                      View listing
+                    </Link>
                   </div>
 
                   <div className="Component-column listing-actions">

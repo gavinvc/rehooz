@@ -11,6 +11,7 @@ import Listings from "./pages/Listings";
 import Offers from "./pages/Offers";
 import Browse from "./pages/Browse";
 import Connect from "./pages/Connect";
+import Listing from "./pages/Listing";
 import Login from "./pages/login";
 
 function PrivateRoute({ children }) {
@@ -145,6 +146,14 @@ function App() {
             element={
               <PrivateRoute>
                 <Browse />
+              </PrivateRoute>
+            }
+          />
+          <Route
+            path="/listing/:listingId"
+            element={
+              <PrivateRoute>
+                <Listing />
               </PrivateRoute>
             }
           />

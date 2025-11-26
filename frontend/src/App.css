@@ -398,6 +398,27 @@ main {
   transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
 }
 
+.view-listing-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  padding: 8px 18px;
+  border: 1px solid #e5e7eb;
+  font-weight: 600;
+  color: #0f172a;
+  background: #ffffff;
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
+  text-decoration: none;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+}
+
+.view-listing-link:hover {
+  transform: translateY(-1px);
+  border-color: #c084fc;
+  box-shadow: 0 10px 20px rgba(129, 140, 248, 0.25);
+}
+
 .Goto-listing {
   background: linear-gradient(135deg, #ff7b45, #ff5e3a);
   color: #ffffff;
@@ -602,6 +623,225 @@ main {
   font-size: 14px;
   color: #6b7280;
   margin: 12px 0 0;
+}
+
+/* ========================
+   LISTING DETAIL PAGE
+   ======================== */
+
+.listing-detail-page {
+  display: flex;
+  justify-content: center;
+}
+
+.listing-detail-card {
+  width: min(960px, 100%);
+  background: #ffffff;
+  border-radius: 32px;
+  padding: 32px;
+  box-shadow: 0 25px 60px rgba(15, 23, 42, 0.15);
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.listing-detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 18px;
+}
+
+.listing-detail-header h2 {
+  margin: 0;
+}
+
+.listing-detail-id {
+  margin: 6px 0 0;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.listing-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  text-decoration: none;
+  color: #6366f1;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.listing-back-link:hover {
+  color: #4338ca;
+}
+
+.place-offer-btn {
+  min-width: 160px;
+}
+
+.listing-detail-body {
+  display: flex;
+  gap: 28px;
+  flex-wrap: wrap;
+}
+
+.listing-photo-panel {
+  flex: 1 1 320px;
+  border-radius: 24px;
+  background: #f8fafc;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+  border: 1px solid #e2e8f0;
+}
+
+.listing-photo-panel img {
+  width: 100%;
+  max-height: 380px;
+  object-fit: contain;
+  border-radius: 18px;
+}
+
+.listing-info-panel {
+  flex: 1 1 320px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.listing-info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.listing-info-row h3 {
+  margin: 0;
+  font-size: 28px;
+}
+
+.listing-price {
+  font-size: 24px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.listing-location {
+  margin: 0;
+  color: #4b5563;
+  font-weight: 500;
+}
+
+.listing-description {
+  margin: 0;
+  color: #1f2937;
+  line-height: 1.5;
+}
+
+.listing-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+}
+
+.listing-seller-link {
+  color: #6366f1;
+  text-decoration: none;
+}
+
+.listing-seller-link:hover {
+  text-decoration: underline;
+}
+
+.listing-meta-followers {
+  font-size: 14px;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.listing-share-hint {
+  font-size: 14px;
+  color: #6b7280;
+  padding: 12px 14px;
+  border-radius: 16px;
+  background: #f8fafc;
+  border: 1px dashed #d1d5db;
+}
+
+.listing-followers-pill {
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 16px;
+  background: #eef2ff;
+  color: #312e81;
+  font-weight: 600;
+}
+
+.listing-followers-pill strong {
+  font-size: 20px;
+}
+
+.listing-meta-error {
+  color: #d92d20;
+  margin: 0;
+  font-size: 14px;
+}
+
+.listing-offers-section {
+  padding: 22px;
+  border-radius: 24px;
+  border: 1px solid #e2e8f0;
+  background: #f9fafb;
+}
+
+.listing-offers-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.listing-offers-header h3 {
+  margin: 0;
+}
+
+.listing-offers-count {
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.listing-offers-empty {
+  margin: 0;
+  color: #4b5563;
+}
+
+.listing-error {
+  color: #d92d20;
+  font-weight: 600;
+}
+
+@media (max-width: 720px) {
+  .listing-detail-card {
+    padding: 24px;
+  }
+
+  .listing-detail-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .place-offer-btn {
+    width: 100%;
+  }
 }
 
 /* ======================== */
