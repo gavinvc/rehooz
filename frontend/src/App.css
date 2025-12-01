@@ -388,7 +388,8 @@ main {
 /* action buttons */
 
 .Goto-listing,
-.Delete-listing {
+.Delete-listing,
+.Edit-listing {
   border: none;
   padding: 10px 20px;
   border-radius: 999px;
@@ -440,6 +441,18 @@ main {
 .Delete-listing:hover {
   transform: translateY(-2px);
   background: #ffe3e3;
+}
+
+.Edit-listing {
+  color: #282c34;
+  background: #f5eedc;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+  border: 1px solid #e0d7c3;
+}
+
+.Edit-listing:hover {
+  background: #f5e9cb;
+  transform: translateY(-2px);
 }
 
 .add-listing-btn {
