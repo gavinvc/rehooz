@@ -8,6 +8,7 @@ export default function Listings() {
   const [form, setForm] = useState({ name: "", price: "", description: "", location: "" });
   const [message, setMessage] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingListing, setEditingListing] = useState(null);
 
   const user = useMemo(() => {
     const stored = localStorage.getItem("user");
@@ -93,15 +94,30 @@ export default function Listings() {
     }
   };
 
-  /*  ADD LISTING */
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const openAddModal = () => {
+    setEditingListing(null); // Add mode
+    setForm({ name: "", price: "", description: "", location: "" });
+    setMessage("");
+    setIsModalOpen(true);
+  };
 
-    if (!userId) {
-      setMessage("Please sign in again to add a listing.");
-      return;
-    }
+  const openEditModal = (listing) => {
+    // Only allow editing if it belongs to this user
+    if (String(listing.seller_id) !== String(userId)) return;
 
+    setEditingListing(listing); // Edit mode
+    setForm({
+      name: listing.name || "",
+      price: listing.price || "",
+      description: listing.description || "",
+      location: listing.location || "",
+    });
+    setMessage("");
+    setIsModalOpen(true);
+  };
+
+  /* ---------- ADD LISTING ---------- */
+  const createListing = async () => {
     const res = await fetch(
       "https://rehooz-app-491933218528.us-east4.run.app/backend/add_listing.php",
       {
@@ -112,14 +128,88 @@ export default function Listings() {
     );
 
     const data = await res.json();
-    setMessage(data.message);
+    setMessage(data.message || "");
 
     if (data.status === "success") {
       setForm({ name: "", price: "", description: "", location: "" });
-
-      fetchMyListings();
+      await fetchMyListings(); // show new listing immediately
+      setIsModalOpen(false);
     }
   };
+
+  /* ---------- EDIT LISTING ---------- */
+  const updateListing = async () => {
+    if (!editingListing) return;
+
+    const res = await fetch(
+      "https://rehooz-app-491933218528.us-east4.run.app/backend/update_listing.php",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          user_id: userId,
+          listing_id: editingListing.listing_id,
+          name: form.name,
+          price: form.price,
+          description: form.description,
+          location: form.location,
+        }),
+      }
+    );
+
+    const data = await res.json();
+    setMessage(data.message || "");
+
+    if (data.status === "success") {
+      await Promise.all([fetchMyListings(), fetchFollowedListings()]);
+      setIsModalOpen(false);
+      setEditingListing(null);
+    }
+  };
+
+  /* ---------- FORM SUBMIT (ADD OR EDIT) ---------- */
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!userId) {
+      setMessage("Please sign in again to add or edit a listing.");
+      return;
+    }
+
+    if (editingListing) {
+      await updateListing();
+    } else {
+      await createListing();
+    }
+  };
+
+  // /*  ADD LISTING */
+  // const handleSubmit = async (e) => {
+  //   e.preventDefault();
+
+  //   if (!userId) {
+  //     setMessage("Please sign in again to add a listing.");
+  //     return;
+  //   }
+
+  //   const res = await fetch(
+  //     "https://rehooz-app-491933218528.us-east4.run.app/backend/add_listing.php",
+  //     {
+  //       method: "POST",
+  //       headers: { "Content-Type": "application/json" },
+  //       body: JSON.stringify({ ...form, seller_id: userId }),
+  //     }
+  //   );
+
+  //   const data = await res.json();
+  //   setMessage(data.message);
+
+  //   if (data.status === "success") {
+  //     setForm({ name: "", price: "", description: "", location: "" });
+
+  //     fetchMyListings();
+  //   }
+  // };
 
   return (
     <main className="page-content">
@@ -129,28 +219,37 @@ export default function Listings() {
         <button
           type="button"
           className="Goto-listing add-listing-btn"
-          onClick={() => setIsModalOpen(true)}
+          onClick={openAddModal}
         >
           Add Listing
         </button>
       </div>
 
-      {/* ADD LISTING MODAL */}
+      {/* ADD / EDIT LISTING MODAL */}
       {isModalOpen && (
         <div className="modal-overlay" role="dialog" aria-modal="true">
           <div className="home-card modal-card">
             <div className="modal-close-row">
-              <h4 style={{ margin: 0 }}>Add a New Listing</h4>
+              <h4 style={{ margin: 0 }}>
+                {editingListing ? "Edit Listing" : "Add a New Listing"}
+              </h4>
               <button
                 type="button"
-                onClick={() => setIsModalOpen(false)}
+                onClick={() => {
+                  setIsModalOpen(false);
+                  setEditingListing(null);
+                }}
                 className="modal-close-btn"
               >
                 ×
               </button>
             </div>
 
-            <img src={rehooz_square} alt="Rehooz" className="home-logo modal-logo" />
+            <img
+              src={rehooz_square}
+              alt="Rehooz"
+              className="home-logo modal-logo"
+            />
 
             <form onSubmit={handleSubmit}>
               <input
@@ -172,18 +271,24 @@ export default function Listings() {
                 name="location"
                 placeholder="Location"
                 value={form.location}
-                onChange={(e) => setForm({ ...form, location: e.target.value })}
+                onChange={(e) =>
+                  setForm({ ...form, location: e.target.value })
+                }
                 required
               />
               <textarea
                 name="description"
                 placeholder="Description"
                 value={form.description}
-                onChange={(e) => setForm({ ...form, description: e.target.value })}
+                onChange={(e) =>
+                  setForm({ ...form, description: e.target.value })
+                }
                 required
               />
 
-              <button type="submit" className="modal-submit-btn">Add Listing</button>
+              <button type="submit" className="modal-submit-btn">
+                {editingListing ? "Save Changes" : "Add Listing"}
+              </button>
             </form>
 
             {message && <p className="modal-message">{message}</p>}
@@ -193,7 +298,6 @@ export default function Listings() {
 
       {/* LISTINGS COLUMNS */}
       <div className="Listings-container">
-
         {/* My Listings */}
         <div className="Listings-column">
           <h3 className="column-title">My Listings</h3>
@@ -201,29 +305,45 @@ export default function Listings() {
             {myListings.length === 0 ? (
               <p>No listings yet.</p>
             ) : (
-              myListings.map((item) => (
-                <div key={item.listing_id} className="Listing-component">
-                  <div className="listing-content">
-                    <h4>{item.name}</h4>
-                    <p>{item.description}</p>
-                    <p><strong>${parseFloat(item.price).toFixed(2)}</strong></p>
-                    <Link
-                      className="view-listing-link"
-                      to={`/listing/${item.listing_id}`}
-                    >
-                      View listing
-                    </Link>
+              // Extra safety: only render listings that belong to this user
+              myListings
+                .filter(
+                  (item) => String(item.seller_id) === String(userId)
+                )
+                .map((item) => (
+                  <div key={item.listing_id} className="Listing-component">
+                    <div className="listing-content">
+                      <h4>{item.name}</h4>
+                      <p>{item.description}</p>
+                      <p>
+                        <strong>
+                          ${parseFloat(item.price).toFixed(2)}
+                        </strong>
+                      </p>
+                      <Link
+                        className="view-listing-link"
+                        to={`/listing/${item.listing_id}`}
+                      >
+                        View listing
+                      </Link>
+                    </div>
+                    <div className="Component-column listing-actions">
+                      {/* Edit button – same place as Delete */}
+                      <button
+                        className="Edit-listing"
+                        onClick={() => openEditModal(item)}
+                      >
+                        Edit
+                      </button>
+                      <button
+                        className="Delete-listing"
+                        onClick={() => deleteListing(item.listing_id)}
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </div>
-                  <div className="Component-column listing-actions">
-                    <button
-                      className="Delete-listing"
-                      onClick={() => deleteListing(item.listing_id)}
-                    >
-                      Delete
-                    </button>
-                  </div>
-                </div>
-              ))
+                ))
             )}
           </div>
         </div>
@@ -240,7 +360,11 @@ export default function Listings() {
                   <div className="listing-content">
                     <h4>{item.name}</h4>
                     <p>{item.description}</p>
-                    <p><strong>${parseFloat(item.price).toFixed(2)}</strong></p>
+                    <p>
+                      <strong>
+                        ${parseFloat(item.price).toFixed(2)}
+                      </strong>
+                    </p>
                     <Link
                       className="view-listing-link"
                       to={`/listing/${item.listing_id}`}
@@ -262,8 +386,154 @@ export default function Listings() {
             )}
           </div>
         </div>
-
       </div>
     </main>
   );
 }
+
+//   return (
+//     <main className="page-content">
+//       {/* HEADER ROW */}
+//       <div className="listings-header">
+//         <h2>Listings</h2>
+//         <button
+//           type="button"
+//           className="Goto-listing add-listing-btn"
+//           onClick={() => setIsModalOpen(true)}
+//         >
+//           Add Listing
+//         </button>
+//       </div>
+
+//       {/* ADD LISTING MODAL */}
+//       {isModalOpen && (
+//         <div className="modal-overlay" role="dialog" aria-modal="true">
+//           <div className="home-card modal-card">
+//             <div className="modal-close-row">
+//               <h4 style={{ margin: 0 }}>Add a New Listing</h4>
+//               <button
+//                 type="button"
+//                 onClick={() => setIsModalOpen(false)}
+//                 className="modal-close-btn"
+//               >
+//                 ×
+//               </button>
+//             </div>
+
+//             <img src={rehooz_square} alt="Rehooz" className="home-logo modal-logo" />
+
+//             <form onSubmit={handleSubmit}>
+//               <input
+//                 name="name"
+//                 placeholder="Item Name"
+//                 value={form.name}
+//                 onChange={(e) => setForm({ ...form, name: e.target.value })}
+//                 required
+//               />
+//               <input
+//                 name="price"
+//                 placeholder="Price"
+//                 type="number"
+//                 value={form.price}
+//                 onChange={(e) => setForm({ ...form, price: e.target.value })}
+//                 required
+//               />
+//               <input
+//                 name="location"
+//                 placeholder="Location"
+//                 value={form.location}
+//                 onChange={(e) => setForm({ ...form, location: e.target.value })}
+//                 required
+//               />
+//               <textarea
+//                 name="description"
+//                 placeholder="Description"
+//                 value={form.description}
+//                 onChange={(e) => setForm({ ...form, description: e.target.value })}
+//                 required
+//               />
+
+//               <button type="submit" className="modal-submit-btn">Add Listing</button>
+//             </form>
+
+//             {message && <p className="modal-message">{message}</p>}
+//           </div>
+//         </div>
+//       )}
+
+//       {/* LISTINGS COLUMNS */}
+//       <div className="Listings-container">
+
+//         {/* My Listings */}
+//         <div className="Listings-column">
+//           <h3 className="column-title">My Listings</h3>
+//           <div className="scroll-box" aria-label="My listings">
+//             {myListings.length === 0 ? (
+//               <p>No listings yet.</p>
+//             ) : (
+//               myListings.map((item) => (
+//                 <div key={item.listing_id} className="Listing-component">
+//                   <div className="listing-content">
+//                     <h4>{item.name}</h4>
+//                     <p>{item.description}</p>
+//                     <p><strong>${parseFloat(item.price).toFixed(2)}</strong></p>
+//                     <Link
+//                       className="view-listing-link"
+//                       to={`/listing/${item.listing_id}`}
+//                     >
+//                       View listing
+//                     </Link>
+//                   </div>
+//                   <div className="Component-column listing-actions">
+//                     <button
+//                       className="Delete-listing"
+//                       onClick={() => deleteListing(item.listing_id)}
+//                     >
+//                       Delete
+//                     </button>
+//                   </div>
+//                 </div>
+//               ))
+//             )}
+//           </div>
+//         </div>
+
+//         {/* Followed Listings */}
+//         <div className="Listings-column">
+//           <h3 className="column-title">Followed Listings</h3>
+//           <div className="scroll-box" aria-label="Followed listings">
+//             {followedListings.length === 0 ? (
+//               <p>No followed listings.</p>
+//             ) : (
+//               followedListings.map((item) => (
+//                 <div key={item.listing_id} className="Listing-component">
+//                   <div className="listing-content">
+//                     <h4>{item.name}</h4>
+//                     <p>{item.description}</p>
+//                     <p><strong>${parseFloat(item.price).toFixed(2)}</strong></p>
+//                     <Link
+//                       className="view-listing-link"
+//                       to={`/listing/${item.listing_id}`}
+//                     >
+//                       View listing
+//                     </Link>
+//                   </div>
+
+//                   <div className="Component-column listing-actions">
+//                     <button
+//                       className="Delete-listing"
+//                       onClick={() => unfollowListing(item.listing_id)}
+//                     >
+//                       Unfollow
+//                     </button>
+//                   </div>
+//                 </div>
+//               ))
+//             )}
+//           </div>
+//         </div>
+
+//       </div>
+//     </main>
+//   );
+// }
