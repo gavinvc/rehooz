@@ -666,6 +666,13 @@ main {
   gap: 18px;
 }
 
+.listing-header-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
 .listing-detail-header h2 {
   margin: 0;
 }

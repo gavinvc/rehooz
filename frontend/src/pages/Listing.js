@@ -13,11 +13,16 @@ export default function Listing() {
 	const [listingFollowers, setListingFollowers] = useState(null);
 	const [metaError, setMetaError] = useState(null);
 	const [isFollowingSeller, setIsFollowingSeller] = useState(null);
+	const [form, setForm] = useState({ name: "", price: "", description: "", location: "" });
+	const [message, setMessage] = useState("");
+	const [isModalOpen, setIsModalOpen] = useState(false);
+	const [editingListing, setEditingListing] = useState(null);
 
 	const user = useMemo(() => {
 		const stored = localStorage.getItem("user");
 		return stored ? JSON.parse(stored) : null;
 	}, []);
+	const userId = user?.user_id;
 
 	useEffect(() => {
 		const controller = new AbortController();
@@ -71,10 +76,6 @@ export default function Listing() {
 	}, [listing]);
 
 	const photoSrc = listing?.photo ? listing.photo : rehooz_square;
-	const sellerProfileLink = useMemo(() => {
-		const sellerId = sellerDetails?.user_id || listing?.seller_id;
-		return sellerId ? `/profile/${sellerId}` : "/profile";
-	}, [sellerDetails?.user_id, listing?.seller_id]);
 
 	useEffect(() => {
 		if (!listing || !listing.listing_id || !listing.seller_id) {
@@ -159,6 +160,69 @@ export default function Listing() {
 		return () => controller.abort();
 	}, [listing]);
 
+	const openEditModal = (listingToEdit) => {
+		if (String(listingToEdit.seller_id) !== String(userId)) return;
+
+		setEditingListing(listingToEdit);
+		setForm({
+			name: listingToEdit.name || "",
+			price: listingToEdit.price || "",
+			description: listingToEdit.description || "",
+			location: listingToEdit.location || "",
+		});
+		setMessage("");
+		setIsModalOpen(true);
+	};
+
+	const updateListing = async () => {
+		if (!editingListing) return;
+
+		const res = await fetch(`${API_BASE_URL}/update_listing.php`, {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({
+				user_id: userId,
+				listing_id: editingListing.listing_id,
+				name: form.name,
+				price: form.price,
+				description: form.description,
+				location: form.location,
+			}),
+		});
+
+		const data = await res.json();
+		setMessage(data.message || "");
+
+		if (data.status === "success") {
+			setListing((prev) =>
+				prev
+					? {
+						...prev,
+						name: form.name,
+						price: form.price,
+						description: form.description,
+						location: form.location,
+					}
+					: prev
+			);
+			setIsModalOpen(false);
+			setEditingListing(null);
+		}
+	};
+
+	const handleSubmit = async (e) => {
+		e.preventDefault();
+
+		if (!userId) {
+			setMessage("Please sign in again to add or edit a listing.");
+			return;
+		}
+
+		if (editingListing) {
+			await updateListing();
+		}
+	};
+
 	const handleFollowSeller = async () => {
 		if (!user || !user.user_id) return alert("Please log in to follow users.");
 		const sellerId = listing?.seller_id;
@@ -230,6 +294,11 @@ export default function Listing() {
 		return `${count} ${label}`;
 	}, [sellerDetails?.follower_count]);
 
+	const isOwner = useMemo(() => {
+		if (!user || !listing) return false;
+		return String(listing.seller_id) === String(user.user_id);
+	}, [user, listing]);
+
 	return (
 		<main className="page-content listing-detail-page">
 			<div className="listing-detail-card">
@@ -243,15 +312,88 @@ export default function Listing() {
 							<p className="listing-detail-id">Listing #{listing.listing_id}</p>
 						)}
 					</div>
-					<button
-						type="button"
-						className="Goto-listing place-offer-btn"
-						onClick={() => alert("Offer placement coming soon!")}
-						disabled={!listing}
-					>
-						Place Offer
-					</button>
+					<div className="listing-header-actions">
+						<button
+							type="button"
+							className="Goto-listing place-offer-btn"
+							onClick={() => alert("Offer placement coming soon!")}
+							disabled={!listing}
+						>
+							Place Offer
+						</button>
+						{isOwner && listing && (
+							<button
+								type="button"
+								className="Edit-listing"
+								onClick={() => openEditModal(listing)}
+							>
+								Edit Listing
+							</button>
+						)}
+					</div>
 				</div>
+
+				{isModalOpen && (
+					<div className="modal-overlay" role="dialog" aria-modal="true">
+						<div className="home-card modal-card">
+							<div className="modal-close-row">
+								<h4 style={{ margin: 0 }}>
+									{editingListing ? "Edit Listing" : "Add a New Listing"}
+								</h4>
+								<button
+									type="button"
+									onClick={() => {
+										setIsModalOpen(false);
+										setEditingListing(null);
+									}}
+									className="modal-close-btn"
+								>
+									×
+								</button>
+							</div>
+
+							<img src={rehooz_square} alt="Rehooz" className="home-logo modal-logo" />
+
+							<form onSubmit={handleSubmit}>
+								<input
+									name="name"
+									placeholder="Item Name"
+									value={form.name}
+									onChange={(e) => setForm({ ...form, name: e.target.value })}
+									required
+								/>
+								<input
+									name="price"
+									placeholder="Price"
+									type="number"
+									value={form.price}
+									onChange={(e) => setForm({ ...form, price: e.target.value })}
+									required
+								/>
+								<input
+									name="location"
+									placeholder="Location"
+									value={form.location}
+									onChange={(e) => setForm({ ...form, location: e.target.value })}
+									required
+								/>
+								<textarea
+									name="description"
+									placeholder="Description"
+									value={form.description}
+									onChange={(e) => setForm({ ...form, description: e.target.value })}
+									required
+								/>
+
+								<button type="submit" className="modal-submit-btn">
+									{editingListing ? "Save Changes" : "Add Listing"}
+								</button>
+							</form>
+
+							{message && <p className="modal-message">{message}</p>}
+						</div>
+					</div>
+				)}
 
 				{loading && <p>Loading listing…</p>}
 				{error && <p className="listing-error">{error}</p>}
