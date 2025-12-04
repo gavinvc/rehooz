@@ -146,6 +146,31 @@ export default function Listing() {
 		return `${count} ${label}`;
 	}, [sellerDetails?.follower_count]);
 
+	const [listingOffers, setListingOffers] = useState([]);
+
+useEffect(() => {
+	if (!listing || !listing.listing_id) return; // wait for listing to load
+
+	async function loadOffers() {
+		try {
+			const res = await fetch(
+				`${API_BASE_URL}/get_all_offers.php?listing_id=${listing.listing_id}`
+			);
+			const data = await res.json();
+			if (data.status === "success") {
+				setListingOffers(data.offers);
+			} else {
+				setListingOffers([]);
+			}
+		} catch (err) {
+			console.error("Error fetching offers", err);
+			setListingOffers([]);
+		}
+	}
+
+	loadOffers();
+}, [listing]);
+
 	return (
 		<main className="page-content listing-detail-page">
 			<div className="listing-detail-card">
@@ -223,12 +248,23 @@ export default function Listing() {
 						<section className="listing-offers-section">
 							<div className="listing-offers-header">
 								<h3>Offers</h3>
-								<span className="listing-offers-count">Coming soon</span>
-							</div>
-							<p className="listing-offers-empty">
-								Offer history and messaging will appear here once the offer
-								feature launches.
-							</p>
+								<span className="listing-offers-count">
+      								{listingOffers.length} offer{listingOffers.length !== 1 ? "s" : ""}
+    							</span>
+  							</div>
+
+  							{listingOffers.length === 0 ? (
+    							<p className="listing-offers-empty">No offers yet.</p>
+  							) : (
+    							<ul className="listing-offers-list">
+      								{listingOffers.map((offer) => (
+        							<li key={offer.offer_id} className="listing-offer-item">
+          								<strong>{offer.buyer_username}</strong> offered{" "}
+          								<span className="offer-amount">${offer.monetary_amount}</span>
+        							</li>
+      								))}
+    							</ul>
+ 							 )}
 						</section>
 					</>
 				)}

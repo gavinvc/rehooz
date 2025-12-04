@@ -154,10 +154,9 @@ export default function Offers() {
                     <div className="listing-content">
                       <h4>{item.listing_name}</h4>
                       <p>{item.description}</p>
-                      <p>
-                        <strong>Final Price:</strong> ${item.monetary_amount}
-                      </p>
-                      <p>Location: {item.location}</p>
+                      <p>Final Price: ${item.final_price}</p>
+                      <p>Original Price: ${item.original_price}</p>
+                      <p>Pickup Location: {item.location}</p>
                     </div>
                   </div>
                 ))
