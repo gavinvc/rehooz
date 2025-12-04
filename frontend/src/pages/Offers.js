@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import rehooz_square from "../rehooz-square.png";
 
 export default function Offers() {
   const user = JSON.parse(localStorage.getItem("user"));
@@ -9,35 +8,60 @@ export default function Offers() {
   const [receivedOffers, setReceivedOffers] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  const loadOffers = async () => {
     if (!userId) return;
 
-    const fetchOffers = async () => {
-      setLoading(true);
+    setLoading(true);
 
-      try {
-        const sentRes = await fetch(
-          `https://rehooz-app-491933218528.us-east4.run.app/backend/get_sent_offers.php?user_id=${userId}`
-        );
-        const sentData = await sentRes.json();
+    const sent = await fetch(
+      `https://rehooz-app-491933218528.us-east4.run.app/backend/get_sent_offers.php?user_id=${userId}`
+    ).then((r) => r.json());
 
-        const receivedRes = await fetch(
-          `https://rehooz-app-491933218528.us-east4.run.app/backend/get_received_offers.php?user_id=${userId}`
-        );
-        const receivedData = await receivedRes.json();
+    const received = await fetch(
+      `https://rehooz-app-491933218528.us-east4.run.app/backend/get_received_offers.php?user_id=${userId}`
+    ).then((r) => r.json());
 
-        if (sentData.status === "success") setSentOffers(sentData.offers);
-        if (receivedData.status === "success") setReceivedOffers(receivedData.offers);
+    if (sent.status === "success") setSentOffers(sent.offers);
+    if (received.status === "success") setReceivedOffers(received.offers);
 
-      } catch (err) {
-        console.error("Failed to load offers", err);
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    loadOffers();
+  }, []);
+
+  // --- RESCIND OFFER ---------------------------------
+  const handleRescind = async (offer_id) => {
+    const res = await fetch(
+      "https://rehooz-app-491933218528.us-east4.run.app/backend/rescind_offer.php",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ offer_id, user_id: userId }),
       }
+    );
 
-      setLoading(false);
-    };
+    const json = await res.json();
+    alert(json.message);
+    loadOffers();
+  };
 
-    fetchOffers();
-  }, [userId]);
+  // --- ACCEPT OFFER -----------------------------------
+  const handleAccept = async (offer_id) => {
+    const res = await fetch(
+      "https://rehooz-app-491933218528.us-east4.run.app/backend/accept_offer.php",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ offer_id, user_id: userId }),
+      }
+    );
+
+    const json = await res.json();
+    alert(json.message);
+    loadOffers();
+  };
 
   return (
     <main className="page-content">
@@ -47,46 +71,65 @@ export default function Offers() {
         <p>Loading...</p>
       ) : (
         <div className="Offers-container">
-          {/* Sent Offers */}
-          <div className="Offers-column">
-            <h3 className="column-title">Sent Offers</h3>
-            <div className="scroll-box">
 
+          {/* SENT */}
+          <div className="Offers-column">
+            <h3>Sent Offers</h3>
+            <div className="scroll-box">
               {sentOffers.length === 0 ? (
-                <p>No offers sent yet.</p>
+                <p>No sent offers.</p>
               ) : (
                 sentOffers.map((offer) => (
                   <div key={offer.offer_id} className="Offer-item">
                     <strong>{offer.listing_name}</strong>
                     <p>Offer: ${offer.monetary_amount}</p>
                     <p>Date: {offer.date}</p>
+
+                    <button
+                      className="Delete-listing"
+                      onClick={() => handleRescind(offer.offer_id)}
+                    >
+                      Rescind Offer
+                    </button>
                   </div>
                 ))
               )}
-
             </div>
           </div>
 
-          {/* Received Offers */}
+          {/* RECEIVED */}
           <div className="Offers-column">
-            <h3 className="column-title">Received Offers</h3>
+            <h3>Received Offers</h3>
             <div className="scroll-box">
-
               {receivedOffers.length === 0 ? (
-                <p>No offers received yet.</p>
+                <p>No offers received.</p>
               ) : (
                 receivedOffers.map((offer) => (
                   <div key={offer.offer_id} className="Offer-item">
                     <strong>{offer.listing_name}</strong>
-                    <p>Buyer: {offer.buyer_username}</p>
+                    <p>From: {offer.buyer_username}</p>
                     <p>Offer: ${offer.monetary_amount}</p>
-                    <p>Date: {offer.date}</p>
+
+                    {!offer.is_accepted && (
+                      <button
+                        className="Goto-listing"
+                        onClick={() => handleAccept(offer.offer_id)}
+                      >
+                        Accept Offer
+                      </button>
+                    )}
+
+                    {offer.is_accepted === "1" && (
+                      <p style={{ color: "green", fontWeight: "bold" }}>
+                        Accepted
+                      </p>
+                    )}
                   </div>
                 ))
               )}
-
             </div>
           </div>
+
         </div>
       )}
     </main>
