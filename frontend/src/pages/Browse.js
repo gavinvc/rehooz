@@ -20,6 +20,12 @@ export default function Browse() {
   const [message, setMessage] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  //offer states: 
+  const [isOfferModalOpen, setIsOfferModalOpen] = useState(false);
+  const [offerAmount, setOfferAmount] = useState("");
+  const [currentListingId, setCurrentListingId] = useState(null);
+  const [offerMessage, setOfferMessage] = useState("");
+
   const user = useMemo(() => {
     const stored = localStorage.getItem("user");
     return stored ? JSON.parse(stored) : null;
@@ -221,6 +227,19 @@ export default function Browse() {
           <Link className="view-listing-link" to={`/listing/${id}`}>
             View listing
           </Link>
+          {user &&(
+            <button
+              className="Goto-listing"
+              onClick={() => {
+                setCurrentListingId(id);
+                setIsOfferModalOpen(true);
+                setOfferMessage("");
+                setOfferAmount("");
+              }}
+              >
+              Make Offer  
+              </button>
+          )}
           {user ? (
             isFollowed ? (
               <button
@@ -310,6 +329,45 @@ export default function Browse() {
     setPriceMin(null);
     setPriceMax(null);
   };
+
+  //offer handlers
+  const handleMakeOffer = async()=>{
+    if(!userId){
+      setOfferMessage("You must be logged in to make an offer.");
+      return;
+    }
+    if(!offerAmount || isNaN(offerAmount) || offerAmount <= 0){
+      setOfferMessage("Please enter a valid offer amount.");
+      return;
+    }
+
+    try{
+      const res = await fetch(
+        "https://rehooz-app-491933218528.us-east4.run.app/backend/make_offer.php",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            user_id: userId,
+            listing_id: currentListingId,
+            monetary_amount: parseFloat(offerAmount)
+          }),
+        }
+      );
+      const data = await res.json();
+      setOfferMessage(data.message);
+      if(data.status === "success"){
+        setOfferAmount("");
+        setTimeout(() => {
+          setIsOfferModalOpen(false);
+          setOfferMessage("");
+        }, 800);
+      }
+    } catch(err){
+      console.error("Failed to make offer:", err);
+      setOfferMessage("Unable to make offer. Please try again.");
+    }
+  }
 
   return (
     <main className="page-content browse-page">
@@ -569,6 +627,47 @@ export default function Browse() {
             </div>
           </div>
         )}
+
+        {isOfferModalOpen && (
+          <div className="modal-overlay" role="dialog" aria-modal="true">
+            <div className="home-card modal-card">
+              <div className="modal-close-row">
+                <h4 style={{ margin: 0 }}>Make an Offer</h4>
+                <button
+                  type="button"
+                  onClick={() => setIsOfferModalOpen(false)}
+                  className="modal-close-btn"
+                >
+              ×
+            </button>
+          </div>
+          <img src={rehooz_square} alt="Rehooz" className="home-logo modal-logo" />
+          <div style={{ textAlign: "center" }}>
+            <input
+              type="number"
+              placeholder="Offer Amount ($)"
+              value={offerAmount}
+              onChange={(e) => setOfferAmount(e.target.value)}
+              required
+            />
+
+            <button
+              className="modal-submit-btn"
+              onClick={handleMakeOffer}
+              style={{ marginTop: "12px" }}
+            >
+              Submit Offer
+            </button>
+
+            {offerMessage && (
+              <p className="modal-message" style={{ marginTop: "10px" }}>
+                {offerMessage}
+              </p>
+            )}
+          </div>
+        </div>
+      </div>
+    )}
 
         {loading ? (
           <p>Loading listings…</p>
