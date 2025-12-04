@@ -777,6 +777,39 @@ main {
   font-weight: 500;
 }
 
+.listing-seller-name {
+  font-weight: 700;
+  margin-left: 8px;
+  margin-right: 10px;
+  color: #0f172a;
+}
+
+.seller-follow-btn,
+.seller-unfollow-btn {
+  border: none;
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-left: 8px;
+}
+
+.seller-follow-btn {
+  background: linear-gradient(135deg, #ff7b45, #ff5e3a);
+  color: #fff;
+}
+
+.seller-unfollow-btn {
+  background: #fff4f4;
+  color: #d92d20;
+  border: 1px solid #ffd1d1;
+}
+
+.listing-follow-loading {
+  margin-left: 8px;
+  color: #6b7280;
+}
+
 .listing-share-hint {
   font-size: 14px;
   color: #6b7280;

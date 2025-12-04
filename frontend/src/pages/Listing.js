@@ -12,6 +12,7 @@ export default function Listing() {
 	const [sellerDetails, setSellerDetails] = useState(null);
 	const [listingFollowers, setListingFollowers] = useState(null);
 	const [metaError, setMetaError] = useState(null);
+	const [isFollowingSeller, setIsFollowingSeller] = useState(null);
 
 	const user = useMemo(() => {
 		const stored = localStorage.getItem("user");
@@ -79,6 +80,7 @@ export default function Listing() {
 		if (!listing || !listing.listing_id || !listing.seller_id) {
 			setSellerDetails(null);
 			setListingFollowers(null);
+			setIsFollowingSeller(null);
 			return;
 		}
 
@@ -124,9 +126,91 @@ export default function Listing() {
 			}
 		};
 
+		// also check whether current user follows this seller
+		const checkFollowing = async () => {
+			if (!user || !user.user_id) {
+				setIsFollowingSeller(null);
+				return;
+			}
+
+			try {
+				const res = await fetch(`${API_BASE_URL}/get_connections.php`, {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ user_id: user.user_id }),
+					signal: controller.signal,
+				});
+				if (!res.ok) throw new Error("Failed to fetch connections");
+				const data = await res.json();
+				if (data.status === "success" && Array.isArray(data.following)) {
+					const found = data.following.some((f) => Number(f.user_id) === Number(listing.seller_id));
+					setIsFollowingSeller(Boolean(found));
+				} else {
+					setIsFollowingSeller(false);
+				}
+			} catch (err) {
+				if (err.name !== "AbortError") console.warn("Could not determine following status", err);
+				setIsFollowingSeller(false);
+			}
+		};
+
 		fetchMeta();
+		checkFollowing();
 		return () => controller.abort();
 	}, [listing]);
+
+	const handleFollowSeller = async () => {
+		if (!user || !user.user_id) return alert("Please log in to follow users.");
+		const sellerId = listing?.seller_id;
+		if (!sellerId) return;
+		try {
+			const res = await fetch(`${API_BASE_URL}/follow_user.php`, {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ user_id: user.user_id, follow_id: sellerId }),
+			});
+			const data = await res.json();
+			if (data.status === "success") {
+				setIsFollowingSeller(true);
+				// refresh seller details follower count
+				const r = await fetch(`${API_BASE_URL}/get_user_followers.php?user_id=${sellerId}`);
+				if (r.ok) {
+					const ud = await r.json();
+					if (ud.status === "success") setSellerDetails(ud.user);
+				}
+			} else {
+				console.warn("Follow user failed", data.message);
+			}
+		} catch (err) {
+			console.error("Follow request failed", err);
+		}
+	};
+
+	const handleUnfollowSeller = async () => {
+		if (!user || !user.user_id) return alert("Please log in to unfollow users.");
+		const sellerId = listing?.seller_id;
+		if (!sellerId) return;
+		try {
+			const res = await fetch(`${API_BASE_URL}/unfollow_user.php`, {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ user_id: user.user_id, follow_id: sellerId }),
+			});
+			const data = await res.json();
+			if (data.status === "success") {
+				setIsFollowingSeller(false);
+				const r = await fetch(`${API_BASE_URL}/get_user_followers.php?user_id=${sellerId}`);
+				if (r.ok) {
+					const ud = await r.json();
+					if (ud.status === "success") setSellerDetails(ud.user);
+				}
+			} else {
+				console.warn("Unfollow user failed", data.message);
+			}
+		} catch (err) {
+			console.error("Unfollow request failed", err);
+		}
+	};
 	const origin = useMemo(() => {
 		if (typeof window === "undefined") return "";
 		return window.location.origin;
@@ -193,13 +277,26 @@ export default function Listing() {
 
 								<div className="listing-meta">
 									<span>Seller:</span>
-									<Link className="listing-seller-link" to={sellerProfileLink}>
-										{sellerDisplayName}
-									</Link>
+									<span className="listing-seller-name">{sellerDisplayName}</span>
+
+									{user ? (
+										isFollowingSeller === null ? (
+											<span className="listing-follow-loading">…</span>
+										) : isFollowingSeller ? (
+											<button className="seller-unfollow-btn" onClick={handleUnfollowSeller}>
+												Unfollow
+											</button>
+										) : (
+											<button className="seller-follow-btn" onClick={handleFollowSeller}>
+												Follow
+											</button>
+										)
+									) : (
+										<p style={{ fontSize: "0.9rem", marginTop: "6px" }}>Log in to follow</p>
+									)}
+
 									{sellerFollowerDescriptor && (
-										<span className="listing-meta-followers">
-											• {sellerFollowerDescriptor}
-										</span>
+										<span className="listing-meta-followers">• {sellerFollowerDescriptor}</span>
 									)}
 								</div>
 
