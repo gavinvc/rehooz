@@ -13,15 +13,30 @@ if (!$user_id) {
     exit;
 }
 
-$sql = "
-    SELECT Offer.offer_id, Offer.listing_id, Offer.buyer_id,
-           Offer.monetary_amount, Offer.date,
-           Listing.name AS listing_name, U.username AS buyer_username
-    FROM Offer
-    JOIN Listing ON Offer.listing_id = Listing.listing_id
-    JOIN User U ON Offer.buyer_id = U.user_id
-    WHERE Listing.seller_id = ?
-    ORDER BY Offer.date DESC
+/*
+   We LEFT JOIN Accepts to detect whether the offer was accepted.
+   If A.offer_id is NULL → not accepted
+   If A.offer_id is NOT NULL → accepted
+*/
+
+$sql = "SELECT 
+        O.offer_id,
+        O.listing_id,
+        O.buyer_id,
+        O.monetary_amount,
+        O.date,
+        L.name AS listing_name,
+        U.username AS buyer_username,
+        CASE 
+            WHEN A.offer_id IS NULL THEN 0 
+            ELSE 1 
+        END AS is_accepted
+    FROM Offer O
+    JOIN Listing L ON O.listing_id = L.listing_id
+    JOIN User U ON O.buyer_id = U.user_id
+    LEFT JOIN Accepts A ON A.offer_id = O.offer_id
+    WHERE L.seller_id = ?
+    ORDER BY O.date DESC
 ";
 
 $stmt = $conn->prepare($sql);
