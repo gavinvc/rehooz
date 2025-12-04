@@ -882,6 +882,92 @@ main {
   font-weight: 600;
 }
 
+/* clickable usernames in Connect etc. */
+.connect-username-button {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: 0;
+  color: #6366f1;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 15px;
+}
+
+.connect-username-button:hover {
+  text-decoration: underline;
+}
+
+/* reviews section on profile / user profile pages */
+.reviews-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.review-card {
+  border-radius: 16px;
+  padding: 12px 14px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  text-align: left;
+}
+
+.review-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+
+.review-author {
+  font-weight: 600;
+  color: #111827;
+}
+
+.review-rating {
+  font-weight: 600;
+  color: #f97316;
+}
+
+.review-comment {
+  margin: 4px 0 6px;
+  color: #374151;
+}
+
+.review-date {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.review-form .review-rating-row {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.review-form select {
+  border-radius: 10px;
+  border: 1px solid #d1d5db;
+  padding: 6px 10px;
+  font-size: 14px;
+}
+
+.profile-empty {
+  color: #6b7280;
+  font-size: 14px;
+}
+
+.profile-message--error {
+  color: #d92d20;
+}
+
+
 @media (max-width: 720px) {
   .listing-detail-card {
     padding: 24px;
@@ -907,3 +993,4 @@ main {
     transform: rotate(360deg);
   }
 }
+

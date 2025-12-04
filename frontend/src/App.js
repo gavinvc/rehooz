@@ -13,6 +13,7 @@ import Browse from "./pages/Browse";
 import Connect from "./pages/Connect";
 import Listing from "./pages/Listing";
 import Login from "./pages/login";
+import UserProfile from "./pages/UserProfile";
 
 function PrivateRoute({ children }) {
   const user = localStorage.getItem("user");
@@ -161,6 +162,7 @@ function App() {
               </PrivateRoute>
             }
           />
+          <Route path="/user/:id" element={<UserProfile />} />
         </Routes>
 
         <footer className="App-footer">
