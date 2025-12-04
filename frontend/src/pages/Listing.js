@@ -12,11 +12,17 @@ export default function Listing() {
 	const [sellerDetails, setSellerDetails] = useState(null);
 	const [listingFollowers, setListingFollowers] = useState(null);
 	const [metaError, setMetaError] = useState(null);
+	const [isFollowingSeller, setIsFollowingSeller] = useState(null);
+	const [form, setForm] = useState({ name: "", price: "", description: "", location: "" });
+	const [message, setMessage] = useState("");
+	const [isModalOpen, setIsModalOpen] = useState(false);
+	const [editingListing, setEditingListing] = useState(null);
 
 	const user = useMemo(() => {
 		const stored = localStorage.getItem("user");
 		return stored ? JSON.parse(stored) : null;
 	}, []);
+	const userId = user?.user_id;
 
 	useEffect(() => {
 		const controller = new AbortController();
@@ -70,15 +76,12 @@ export default function Listing() {
 	}, [listing]);
 
 	const photoSrc = listing?.photo ? listing.photo : rehooz_square;
-	const sellerProfileLink = useMemo(() => {
-		const sellerId = sellerDetails?.user_id || listing?.seller_id;
-		return sellerId ? `/profile/${sellerId}` : "/profile";
-	}, [sellerDetails?.user_id, listing?.seller_id]);
 
 	useEffect(() => {
 		if (!listing || !listing.listing_id || !listing.seller_id) {
 			setSellerDetails(null);
 			setListingFollowers(null);
+			setIsFollowingSeller(null);
 			return;
 		}
 
@@ -124,9 +127,154 @@ export default function Listing() {
 			}
 		};
 
+		// also check whether current user follows this seller
+		const checkFollowing = async () => {
+			if (!user || !user.user_id) {
+				setIsFollowingSeller(null);
+				return;
+			}
+
+			try {
+				const res = await fetch(`${API_BASE_URL}/get_connections.php`, {
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({ user_id: user.user_id }),
+					signal: controller.signal,
+				});
+				if (!res.ok) throw new Error("Failed to fetch connections");
+				const data = await res.json();
+				if (data.status === "success" && Array.isArray(data.following)) {
+					const found = data.following.some((f) => Number(f.user_id) === Number(listing.seller_id));
+					setIsFollowingSeller(Boolean(found));
+				} else {
+					setIsFollowingSeller(false);
+				}
+			} catch (err) {
+				if (err.name !== "AbortError") console.warn("Could not determine following status", err);
+				setIsFollowingSeller(false);
+			}
+		};
+
 		fetchMeta();
+		checkFollowing();
 		return () => controller.abort();
 	}, [listing]);
+
+	const openEditModal = (listingToEdit) => {
+		if (String(listingToEdit.seller_id) !== String(userId)) return;
+
+		setEditingListing(listingToEdit);
+		setForm({
+			name: listingToEdit.name || "",
+			price: listingToEdit.price || "",
+			description: listingToEdit.description || "",
+			location: listingToEdit.location || "",
+		});
+		setMessage("");
+		setIsModalOpen(true);
+	};
+
+	const updateListing = async () => {
+		if (!editingListing) return;
+
+		const res = await fetch(`${API_BASE_URL}/update_listing.php`, {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({
+				user_id: userId,
+				listing_id: editingListing.listing_id,
+				name: form.name,
+				price: form.price,
+				description: form.description,
+				location: form.location,
+			}),
+		});
+
+		const data = await res.json();
+		setMessage(data.message || "");
+
+		if (data.status === "success") {
+			setListing((prev) =>
+				prev
+					? {
+						...prev,
+						name: form.name,
+						price: form.price,
+						description: form.description,
+						location: form.location,
+					}
+					: prev
+			);
+			setIsModalOpen(false);
+			setEditingListing(null);
+		}
+	};
+
+	const handleSubmit = async (e) => {
+		e.preventDefault();
+
+		if (!userId) {
+			setMessage("Please sign in again to add or edit a listing.");
+			return;
+		}
+
+		if (editingListing) {
+			await updateListing();
+		}
+	};
+
+	const handleFollowSeller = async () => {
+		if (!user || !user.user_id) return alert("Please log in to follow users.");
+		const sellerId = listing?.seller_id;
+		if (!sellerId) return;
+		try {
+			const res = await fetch(`${API_BASE_URL}/follow_user.php`, {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ user_id: user.user_id, follow_id: sellerId }),
+			});
+			const data = await res.json();
+			if (data.status === "success") {
+				setIsFollowingSeller(true);
+				// refresh seller details follower count
+				const r = await fetch(`${API_BASE_URL}/get_user_followers.php?user_id=${sellerId}`);
+				if (r.ok) {
+					const ud = await r.json();
+					if (ud.status === "success") setSellerDetails(ud.user);
+				}
+			} else {
+				console.warn("Follow user failed", data.message);
+			}
+		} catch (err) {
+			console.error("Follow request failed", err);
+		}
+	};
+
+	const handleUnfollowSeller = async () => {
+		if (!user || !user.user_id) return alert("Please log in to unfollow users.");
+		const sellerId = listing?.seller_id;
+		if (!sellerId) return;
+		try {
+			const res = await fetch(`${API_BASE_URL}/unfollow_user.php`, {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ user_id: user.user_id, follow_id: sellerId }),
+			});
+			const data = await res.json();
+			if (data.status === "success") {
+				setIsFollowingSeller(false);
+				const r = await fetch(`${API_BASE_URL}/get_user_followers.php?user_id=${sellerId}`);
+				if (r.ok) {
+					const ud = await r.json();
+					if (ud.status === "success") setSellerDetails(ud.user);
+				}
+			} else {
+				console.warn("Unfollow user failed", data.message);
+			}
+		} catch (err) {
+			console.error("Unfollow request failed", err);
+		}
+	};
 	const origin = useMemo(() => {
 		if (typeof window === "undefined") return "";
 		return window.location.origin;
@@ -145,6 +293,11 @@ export default function Listing() {
 		const label = count === 1 ? "follower" : "followers";
 		return `${count} ${label}`;
 	}, [sellerDetails?.follower_count]);
+
+	const isOwner = useMemo(() => {
+		if (!user || !listing) return false;
+		return String(listing.seller_id) === String(user.user_id);
+	}, [user, listing]);
 
 	const [listingOffers, setListingOffers] = useState([]);
 
@@ -184,15 +337,88 @@ useEffect(() => {
 							<p className="listing-detail-id">Listing #{listing.listing_id}</p>
 						)}
 					</div>
-					<button
-						type="button"
-						className="Goto-listing place-offer-btn"
-						onClick={() => alert("Offer placement coming soon!")}
-						disabled={!listing}
-					>
-						Place Offer
-					</button>
+					<div className="listing-header-actions">
+						<button
+							type="button"
+							className="Goto-listing place-offer-btn"
+							onClick={() => alert("Offer placement coming soon!")}
+							disabled={!listing}
+						>
+							Place Offer
+						</button>
+						{isOwner && listing && (
+							<button
+								type="button"
+								className="Edit-listing"
+								onClick={() => openEditModal(listing)}
+							>
+								Edit Listing
+							</button>
+						)}
+					</div>
 				</div>
+
+				{isModalOpen && (
+					<div className="modal-overlay" role="dialog" aria-modal="true">
+						<div className="home-card modal-card">
+							<div className="modal-close-row">
+								<h4 style={{ margin: 0 }}>
+									{editingListing ? "Edit Listing" : "Add a New Listing"}
+								</h4>
+								<button
+									type="button"
+									onClick={() => {
+										setIsModalOpen(false);
+										setEditingListing(null);
+									}}
+									className="modal-close-btn"
+								>
+									×
+								</button>
+							</div>
+
+							<img src={rehooz_square} alt="Rehooz" className="home-logo modal-logo" />
+
+							<form onSubmit={handleSubmit}>
+								<input
+									name="name"
+									placeholder="Item Name"
+									value={form.name}
+									onChange={(e) => setForm({ ...form, name: e.target.value })}
+									required
+								/>
+								<input
+									name="price"
+									placeholder="Price"
+									type="number"
+									value={form.price}
+									onChange={(e) => setForm({ ...form, price: e.target.value })}
+									required
+								/>
+								<input
+									name="location"
+									placeholder="Location"
+									value={form.location}
+									onChange={(e) => setForm({ ...form, location: e.target.value })}
+									required
+								/>
+								<textarea
+									name="description"
+									placeholder="Description"
+									value={form.description}
+									onChange={(e) => setForm({ ...form, description: e.target.value })}
+									required
+								/>
+
+								<button type="submit" className="modal-submit-btn">
+									{editingListing ? "Save Changes" : "Add Listing"}
+								</button>
+							</form>
+
+							{message && <p className="modal-message">{message}</p>}
+						</div>
+					</div>
+				)}
 
 				{loading && <p>Loading listing…</p>}
 				{error && <p className="listing-error">{error}</p>}
@@ -218,13 +444,26 @@ useEffect(() => {
 
 								<div className="listing-meta">
 									<span>Seller:</span>
-									<Link className="listing-seller-link" to={sellerProfileLink}>
-										{sellerDisplayName}
-									</Link>
+									<span className="listing-seller-name">{sellerDisplayName}</span>
+
+									{user ? (
+										isFollowingSeller === null ? (
+											<span className="listing-follow-loading">…</span>
+										) : isFollowingSeller ? (
+											<button className="seller-unfollow-btn" onClick={handleUnfollowSeller}>
+												Unfollow
+											</button>
+										) : (
+											<button className="seller-follow-btn" onClick={handleFollowSeller}>
+												Follow
+											</button>
+										)
+									) : (
+										<p style={{ fontSize: "0.9rem", marginTop: "6px" }}>Log in to follow</p>
+									)}
+
 									{sellerFollowerDescriptor && (
-										<span className="listing-meta-followers">
-											• {sellerFollowerDescriptor}
-										</span>
+										<span className="listing-meta-followers">• {sellerFollowerDescriptor}</span>
 									)}
 								</div>
 
