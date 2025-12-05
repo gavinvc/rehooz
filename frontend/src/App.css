@@ -967,6 +967,61 @@ main {
   color: #d92d20;
 }
 
+.star-rating {
+  margin-left: 6px;
+  font-size: 14px;
+}
+
+.ratings-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.rating-card {
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.rating-header {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  gap: 12px;
+}
+
+.rating-author {
+  font-weight: 600;
+  color: #111827;
+}
+
+.rating-score {
+  font-weight: 500;
+  color: #4b5563;
+}
+
+.rating-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 240px;
+}
+
+.rating-select {
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  padding: 6px 8px;
+  font-size: 14px;
+}
+
 
 @media (max-width: 720px) {
   .listing-detail-card {

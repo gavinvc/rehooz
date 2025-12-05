@@ -219,12 +219,22 @@
 //   );
 // }
 // src/pages/Profile.js
+
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
 const API_BASE =
   "https://rehooz-app-491933218528.us-east4.run.app/backend";
 
+function StarRating({ value }) {
+  const rounded = Math.round(Number(value) || 0);
+  const full = Math.min(Math.max(rounded, 0), 5);
+  return (
+    <span className="star-rating">
+      {"★".repeat(full) + "☆".repeat(5 - full)}
+    </span>
+  );
+}
 export default function Profile() {
   const [user, setUser] = useState(null);
   const [desc, setDesc] = useState("");
@@ -237,9 +247,9 @@ export default function Profile() {
   const [message, setMessage] = useState("");
   const [editing, setEditing] = useState(false);
   const [checked, setChecked] = useState(false);
-  const [reviews, setReviews] = useState([]);       // ⭐ NEW: all reviews about me
-  const [reviewsError, setReviewsError] = useState(""); // optional error msg
-
+  const [avgRating, setAvgRating] = useState(0);
+  const [ratings, setRatings] = useState([]);
+  const [ratingsError, setRatingsError] = useState("");
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -262,8 +272,14 @@ export default function Profile() {
       return;
     }
 
-    if (storedUser) {
-      setUser(storedUser);
+    // if (storedUser) {
+    //   setUser(storedUser);
+     if (!storedUser) {
+      navigate("/");
+      return;
+    }
+
+    setUser(storedUser);
 
       // 1) Basic profile info
       fetch(`${API_BASE}/get_user.php?id=${storedUser.user_id}`)
@@ -278,27 +294,26 @@ export default function Profile() {
           // fail silently; page still works
         });
 
-      // 2) Reviews about this user
+      // 2) Load ratings about this user
       fetch(`${API_BASE}/get_user_reviews.php`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ target_id: storedUser.user_id }),
       })
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.status === "success") {
-            setReviews(data.reviews || []);
-            if (typeof data.avg_rating === "number") {
-              setRating(data.avg_rating); // keep the header rating in sync
-            }
-          } else {
-            setReviewsError(data.message || "Could not load your reviews.");
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.status === "success") {
+          setRatings(data.ratings || []);
+          if (typeof data.avg_rating === "number") {
+            setAvgRating(data.avg_rating);
           }
-        })
-        .catch(() => {
-          setReviewsError("Could not load your reviews.");
-        });
-    }
+        } else {
+          setRatingsError(data.message || "Could not load your ratings.");
+        }
+      })
+      .catch(() => {
+        setRatingsError("Could not load your ratings.");
+      });
 
     setChecked(true);
   }, [navigate]);
@@ -360,10 +375,8 @@ export default function Profile() {
           <div className="profile-row">
             <span className="profile-label">Overall Rating</span>
             <span className="profile-value">
-              {(
-                (typeof rating === "number" ? rating : Number(rating)) || 0
-              ).toFixed(1)}{" "}
-              / 5.0
+              {avgRating.toFixed(1)} / 5.0{" "}
+              <StarRating value={avgRating} />
             </span>
           </div>
         </section>
@@ -456,41 +469,6 @@ export default function Profile() {
           </section>
         )}
 
-        {/* ⭐ NEW: Ratings & comments about this user */}
-        <section className="profile-section">
-          <h3 className="profile-section-title">Ratings &amp; Comments About You</h3>
-          {reviewsError && (
-            <p className="profile-message profile-message--error">
-              {reviewsError}
-            </p>
-          )}
-          {(!reviews || reviews.length === 0) && !reviewsError ? (
-            <p className="profile-empty">
-              No one has left a review yet.
-            </p>
-          ) : (
-            <ul className="reviews-list">
-              {reviews.map((r) => (
-                <li key={r.id} className="review-card">
-                  <div className="review-header">
-                    <span className="review-author">
-                      @{r.reviewer_username}
-                    </span>
-                    <span className="review-rating">
-                      {Number(r.rating).toFixed(1)} / 5
-                    </span>
-                  </div>
-                  <p className="review-comment">{r.comment}</p>
-                  {r.created_at && (
-                    <span className="review-date">
-                      {new Date(r.created_at).toLocaleDateString()}
-                    </span>
-                  )}
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
 
         {message && <p className="profile-message">{message}</p>}
       </div>

@@ -1,49 +1,72 @@
 <?php
 // backend/get_user_reviews.php
-header("Content-Type: application/json");
-require_once "config.php";
+header("Content-Type: application/json; charset=utf-8");
+include "config.php";   // same as get_user.php
 
-$input = json_decode(file_get_contents("php://input"), true);
-$target_id = isset($input['target_id']) ? intval($input['target_id']) : 0;
+$raw = file_get_contents("php://input");
+$input = json_decode($raw, true);
+
+if (!is_array($input)) {
+    echo json_encode([
+        "status" => "error",
+        "message" => "Invalid JSON input."
+    ]);
+    exit;
+}
+
+$target_id = isset($input['target_id']) ? (int)$input['target_id'] : 0;
 
 if ($target_id <= 0) {
     echo json_encode([
-        "status" => "error",
+        "status"  => "error",
         "message" => "Missing target_id."
     ]);
     exit;
 }
 
-try {
-    // get reviews + reviewer usernames
-    $stmt = $pdo->prepare("
-        SELECT r.id, r.rating, r.comment, r.created_at, u.username AS reviewer_username
-        FROM user_reviews r
-        JOIN users u ON r.reviewer_id = u.user_id
-        WHERE r.target_id = ?
-        ORDER BY r.created_at DESC
-    ");
-    $stmt->execute([$target_id]);
-    $reviews = $stmt->fetchAll(PDO::FETCH_ASSOC);
+// Treat these as "profile" ratings
+$rateType = "profile";
 
-    // average rating
-    $avgStmt = $pdo->prepare("
-        SELECT AVG(rating) AS avg_rating
-        FROM user_reviews
-        WHERE target_id = ?
-    ");
-    $avgStmt->execute([$target_id]);
-    $avgRow = $avgStmt->fetch(PDO::FETCH_ASSOC);
-    $avg = $avgRow && $avgRow['avg_rating'] ? floatval($avgRow['avg_rating']) : 0;
+// 1) Fetch ratings for this user
+$stmt = $conn->prepare("
+    SELECT r.rater_id,
+           r.score,
+           u.username AS rater_username
+    FROM Rates r
+    JOIN User u ON r.rater_id = u.user_id
+    WHERE r.user_id = ? AND r.type = ?
+    ORDER BY r.rater_id ASC
+");
+$stmt->bind_param("is", $target_id, $rateType);
+$stmt->execute();
+$result = $stmt->get_result();
 
-    echo json_encode([
-        "status" => "success",
-        "avg_rating" => $avg,
-        "reviews" => $reviews
-    ]);
-} catch (Exception $e) {
-    echo json_encode([
-        "status" => "error",
-        "message" => "Database error."
-    ]);
+$ratings = [];
+while ($row = $result->fetch_assoc()) {
+    $ratings[] = $row;
 }
+$stmt->close();
+
+// 2) Compute average score
+$avgStmt = $conn->prepare("
+    SELECT AVG(score) AS avg_score
+    FROM Rates
+    WHERE user_id = ? AND type = ?
+");
+$avgStmt->bind_param("is", $target_id, $rateType);
+$avgStmt->execute();
+$avgResult = $avgStmt->get_result();
+$avgRow = $avgResult->fetch_assoc();
+$avgStmt->close();
+
+$avg = ($avgRow && $avgRow['avg_score'] !== null)
+    ? (float)$avgRow['avg_score']
+    : 0.0;
+
+echo json_encode([
+    "status"     => "success",
+    "avg_rating" => $avg,
+    "ratings"    => $ratings
+]);
+
+$conn->close();
