@@ -1,28 +1,33 @@
-// src/pages/UserProfile.js
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 const API_BASE = "https://rehooz-app-491933218528.us-east4.run.app/backend";
 
+// Simple star display component
+function StarRating({ value }) {
+  const rounded = Math.round(Number(value) || 0);
+  const full = Math.min(Math.max(rounded, 0), 5);
+  return (
+    <span className="star-rating">
+      {"★".repeat(full) + "☆".repeat(5 - full)}
+    </span>
+  );
+}
+
 export default function UserProfile() {
-  const { id } = useParams();            // the user_id from /user/:id
+  const { id } = useParams(); // id of the user being viewed
   const navigate = useNavigate();
 
-  const [viewer, setViewer] = useState(null);      // logged-in user
-  const [targetUser, setTargetUser] = useState(null);
+  const [viewer, setViewer] = useState(null);       // logged-in user
+  const [targetUser, setTargetUser] = useState(null); // user being viewed
   const [avgRating, setAvgRating] = useState(0);
-  const [reviews, setReviews] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [ratings, setRatings] = useState([]);
+  const [newRating, setNewRating] = useState(5);
+  const [submitting, setSubmitting] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const [newRating, setNewRating] = useState(5);
-  const [newComment, setNewComment] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-
-  const goBackToMyProfile = () => {
-    navigate("/profile");
-};
-
+  // 1) Load logged-in user from localStorage
   useEffect(() => {
     const storedUserRaw = localStorage.getItem("user");
     let storedUser = null;
@@ -31,6 +36,7 @@ export default function UserProfile() {
       storedUser = storedUserRaw ? JSON.parse(storedUserRaw) : null;
     } catch (_) {
       localStorage.removeItem("user");
+      storedUser = null;
     }
 
     if (!storedUser) {
@@ -41,38 +47,46 @@ export default function UserProfile() {
     setViewer(storedUser);
   }, [navigate]);
 
+  // 2) Load target user + ratings whenever :id changes
   useEffect(() => {
     if (!id) return;
+
     const fetchAll = async () => {
       try {
         setLoading(true);
         setError("");
 
-        // 1) basic user info
+        // --- basic user info ---
         const userRes = await fetch(`${API_BASE}/get_user.php?id=${id}`);
         const userData = await userRes.json();
+
         if (userData.status !== "success") {
-          setError("Could not load user profile.");
+          setError(userData.message || "Could not load user profile.");
           setLoading(false);
           return;
         }
-        setTargetUser(userData.user);
 
-        // 2) ratings + comments
-        const reviewsRes = await fetch(`${API_BASE}/get_user_reviews.php`, {
+        setTargetUser(userData.user);
+        // use overall_rating from User as initial value
+        setAvgRating(parseFloat(userData.user.overall_rating) || 0);
+
+        // --- ratings from backend (using Rates table) ---
+        const ratingsRes = await fetch(`${API_BASE}/get_user_reviews.php`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ target_id: id }),
+          body: JSON.stringify({ target_id: Number(id) }),
         });
-        const reviewsData = await reviewsRes.json();
-        if (reviewsData.status === "success") {
-          setAvgRating(reviewsData.avg_rating || 0);
-          setReviews(reviewsData.reviews || []);
+
+        const ratingsData = await ratingsRes.json();
+
+        if (ratingsData.status === "success") {
+          setAvgRating(ratingsData.avg_rating || 0);
+          setRatings(ratingsData.ratings || []);
         } else {
-          setError(reviewsData.message || "Could not load reviews.");
+          setError(ratingsData.message || "Could not load ratings.");
         }
       } catch (err) {
-        console.error(err);
+        console.error("Error loading user profile:", err);
         setError("Something went wrong loading this profile.");
       } finally {
         setLoading(false);
@@ -82,17 +96,34 @@ export default function UserProfile() {
     fetchAll();
   }, [id]);
 
-  const handleSubmitReview = async (e) => {
-    e.preventDefault();
-    if (!viewer || !targetUser) return;
+  // 3) Determine if the viewer already rated this user
+  const viewerRating = useMemo(() => {
+    if (!viewer) return null;
+    const viewerId = viewer.user_id ?? viewer.id;
+    return ratings.find((r) => String(r.rater_id) === String(viewerId)) || null;
+  }, [viewer, ratings]);
 
-    if (String(viewer.user_id) === String(targetUser.user_id)) {
-      setError("You can’t leave a review for yourself.");
+  const isOwnProfile =
+    viewer && String(viewer.user_id ?? viewer.id) === String(id);
+
+  const handleSubmitRating = async (e) => {
+    e.preventDefault();
+    if (!viewer || !targetUser) {
+      setError("Failed to load profile information. Please refresh and try again.");
       return;
     }
 
-    if (!newComment.trim()) {
-      setError("Please write a short comment.");
+    const reviewerId = viewer.user_id ?? viewer.id;
+    const targetId = Number(id);
+
+    if (!reviewerId || !targetId) {
+      console.error("Missing user IDs for rating:", { viewer, targetUser, id });
+      setError("Could not determine user IDs. Please log out and back in.");
+      return;
+    }
+
+    if (String(reviewerId) === String(targetId)) {
+      setError("You can’t rate yourself.");
       return;
     }
 
@@ -104,46 +135,49 @@ export default function UserProfile() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          reviewer_id: viewer.user_id,
-          target_id: targetUser.user_id,
+          reviewer_id: reviewerId,
+          target_id: targetId,
           rating: Number(newRating),
-          comment: newComment.trim(),
         }),
       });
 
       const data = await res.json();
       if (data.status !== "success") {
-        setError(data.message || "Could not submit review.");
+        setError(data.message || "Could not submit rating.");
         return;
       }
 
       setNewRating(5);
-      setNewComment("");
 
-      // reload reviews after successful submit
-      const reviewsRes = await fetch(`${API_BASE}/get_user_reviews.php`, {
+      // reload ratings after successful post
+      const ratingsRes = await fetch(`${API_BASE}/get_user_reviews.php`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ target_id: targetUser.user_id }),
+        body: JSON.stringify({ target_id: targetId }),
       });
-      const reviewsData = await reviewsRes.json();
-      if (reviewsData.status === "success") {
-        setAvgRating(reviewsData.avg_rating || 0);
-        setReviews(reviewsData.reviews || []);
+      const ratingsData = await ratingsRes.json();
+      if (ratingsData.status === "success") {
+        setAvgRating(ratingsData.avg_rating || 0);
+        setRatings(ratingsData.ratings || []);
       }
     } catch (err) {
-      console.error(err);
-      setError("Something went wrong submitting your review.");
+      console.error("Error submitting rating:", err);
+      setError("Something went wrong submitting your rating.");
     } finally {
       setSubmitting(false);
     }
   };
 
-  if (loading) {
+  const goBackToMyProfile = () => {
+    navigate("/profile");
+  };
+
+  // Loading / fallback UI
+  if (loading && !targetUser) {
     return (
       <main className="page-content profile-page">
         <div className="profile-card">
-          <p>Loading profile…</p>
+          <p>Loading user…</p>
         </div>
       </main>
     );
@@ -153,7 +187,7 @@ export default function UserProfile() {
     return (
       <main className="page-content profile-page">
         <div className="profile-card">
-          <p>Profile not found.</p>
+          <p>Could not load user.</p>
         </div>
       </main>
     );
@@ -162,122 +196,121 @@ export default function UserProfile() {
   return (
     <main className="page-content profile-page">
       <div className="profile-card">
+        {/* Header row with Back button */}
         <div
-            style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "center",
-                marginBottom: "10px",
-            }}
-            ></div>
-        <h2 className="profile-title">
-          @{targetUser.username}
-        </h2>
-
-        <button
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: "10px",
+          }}
+        >
+          <h2 className="profile-title">@{targetUser.username}</h2>
+          <button
             type="button"
             className="profile-btn secondary"
             onClick={goBackToMyProfile}
-        >
+          >
             Back to My Profile
-        </button>
-    
+          </button>
+        </div>
 
-        {/* Basic info */}
+        {error && (
+          <p className="profile-message profile-message--error">{error}</p>
+        )}
+
+        {/* About This User */}
         <section className="profile-section">
           <h3 className="profile-section-title">About This User</h3>
+
           <div className="profile-row">
             <span className="profile-label">Username</span>
             <span className="profile-value">{targetUser.username}</span>
           </div>
-          {targetUser.city && (
-            <div className="profile-row">
-              <span className="profile-label">Location</span>
-              <span className="profile-value">{targetUser.city}</span>
-            </div>
-          )}
+
           <div className="profile-row">
             <span className="profile-label">Average Rating</span>
             <span className="profile-value">
-              {Number(avgRating || targetUser.overall_rating || 0).toFixed(1)} / 5.0
+              {avgRating.toFixed(1)} / 5.0{" "}
+              <StarRating value={avgRating} />
             </span>
           </div>
-        </section>
 
-        {/* Description */}
-        <section className="profile-section">
-          <h3 className="profile-section-title">Profile Description</h3>
+          <div className="profile-row">
+            <span className="profile-label">Profile Description</span>
+          </div>
           <p className="profile-desc-box">
             {targetUser.profile_desc || "No description yet."}
           </p>
+
+          {viewerRating && (
+            <p className="profile-message">
+              You rated this user {Number(viewerRating.score).toFixed(1)} / 5{" "}
+              <StarRating value={viewerRating.score} />.
+            </p>
+          )}
         </section>
 
-        {/* Reviews list */}
+        {/* Ratings list */}
         <section className="profile-section">
-          <h3 className="profile-section-title">Ratings &amp; Comments</h3>
-          {reviews.length === 0 ? (
-            <p className="profile-empty">No reviews yet. Be the first to leave one!</p>
+          <h3 className="profile-section-title">User Ratings</h3>
+
+          {ratings.length === 0 ? (
+            <p className="profile-empty">
+              No ratings yet. Be the first to rate this user!
+            </p>
           ) : (
-            <ul className="reviews-list">
-              {reviews.map((r) => (
-                <li key={r.id} className="review-card">
-                  <div className="review-header">
-                    <span className="review-author">@{r.reviewer_username}</span>
-                    <span className="review-rating">
-                      {r.rating.toFixed(1)} / 5
+            <ul className="ratings-list">
+              {ratings.map((r) => (
+                <li
+                  key={`${r.rater_id}-${r.score}-${r.rater_username}`}
+                  className="rating-card"
+                >
+                  <div className="rating-header">
+                    <span className="rating-author">@{r.rater_username}</span>
+                    <span className="rating-score">
+                      {Number(r.score).toFixed(1)} / 5{" "}
+                      <StarRating value={r.score} />
                     </span>
                   </div>
-                  <p className="review-comment">{r.comment}</p>
-                  {r.created_at && (
-                    <span className="review-date">
-                      {new Date(r.created_at).toLocaleDateString()}
-                    </span>
-                  )}
                 </li>
               ))}
             </ul>
           )}
         </section>
 
-        {/* Add review form */}
-        {viewer && String(viewer.user_id) !== String(targetUser.user_id) && (
+        {/* Leave a Rating (only if viewing someone else) */}
+        {viewer && !isOwnProfile && (
           <section className="profile-section">
             <h3 className="profile-section-title">Leave a Rating</h3>
-            <form className="review-form" onSubmit={handleSubmitReview}>
-              <label className="review-rating-row">
+
+            <form className="rating-form" onSubmit={handleSubmitRating}>
+              <label className="rating-row">
                 Rating
                 <select
                   value={newRating}
                   onChange={(e) => setNewRating(e.target.value)}
+                  className="rating-select"
                 >
-                  <option value={5}>5 – Great experience</option>
+                  <option value={5}>5 – Excellent</option>
                   <option value={4}>4 – Good</option>
-                  <option value={3}>3 – Okay</option>
-                  <option value={2}>2 – Not great</option>
-                  <option value={1}>1 – Poor</option>
+                  <option value={3}>3 – Neutral</option>
+                  <option value={2}>2 – Poor</option>
+                  <option value={1}>1 – Very Poor</option>
                 </select>
               </label>
-
-              <textarea
-                className="profile-textarea"
-                rows="3"
-                placeholder="Share anything others should know about trading with this person…"
-                value={newComment}
-                onChange={(e) => setNewComment(e.target.value)}
-              />
 
               <button
                 type="submit"
                 className="profile-btn primary"
                 disabled={submitting}
+                style={{ marginTop: "10px" }}
               >
-                {submitting ? "Submitting…" : "Post Review"}
+                {submitting ? "Submitting…" : "Post Rating"}
               </button>
             </form>
           </section>
         )}
-
-        {error && <p className="profile-message profile-message--error">{error}</p>}
       </div>
     </main>
   );

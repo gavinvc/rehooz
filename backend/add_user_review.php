@@ -1,58 +1,95 @@
 <?php
 // backend/add_user_review.php
-header("Content-Type: application/json");
-require_once "config.php";
+header("Content-Type: application/json; charset=utf-8");
+include "config.php";   // same include as get_user.php
 
-$input = json_decode(file_get_contents("php://input"), true);
+$raw = file_get_contents("php://input");
+$input = json_decode($raw, true);
 
-$target_id   = isset($input['target_id']) ? intval($input['target_id']) : 0;
-$reviewer_id = isset($input['reviewer_id']) ? intval($input['reviewer_id']) : 0;
-$rating      = isset($input['rating']) ? intval($input['rating']) : 0;
-$comment     = isset($input['comment']) ? trim($input['comment']) : "";
+if (!is_array($input)) {
+    echo json_encode([
+        "status" => "error",
+        "message" => "Invalid JSON input."
+    ]);
+    exit;
+}
+
+$target_id   = isset($input['target_id']) ? (int)$input['target_id'] : 0;
+$reviewer_id = isset($input['reviewer_id']) ? (int)$input['reviewer_id'] : 0;
+$rating      = isset($input['rating']) ? (int)$input['rating'] : 0;
+
+$rateType = "profile";
 
 if ($target_id <= 0 || $reviewer_id <= 0) {
-    echo json_encode(["status" => "error", "message" => "Missing user IDs."]);
+    echo json_encode([
+        "status"  => "error",
+        "message" => "Missing user IDs."
+    ]);
     exit;
 }
 
 if ($target_id === $reviewer_id) {
-    echo json_encode(["status" => "error", "message" => "You cannot review yourself."]);
+    echo json_encode([
+        "status"  => "error",
+        "message" => "You cannot rate yourself."
+    ]);
     exit;
 }
 
 if ($rating < 1 || $rating > 5) {
-    echo json_encode(["status" => "error", "message" => "Rating must be between 1 and 5."]);
+    echo json_encode([
+        "status"  => "error",
+        "message" => "Rating must be between 1 and 5."
+    ]);
     exit;
 }
 
 try {
-    // insert review
-    $stmt = $pdo->prepare("
-        INSERT INTO user_reviews (target_id, reviewer_id, rating, comment)
+    // 1) Insert rating into Rates
+    $stmt = $conn->prepare("
+        INSERT INTO Rates (rater_id, user_id, type, score)
         VALUES (?, ?, ?, ?)
     ");
-    $stmt->execute([$target_id, $reviewer_id, $rating, $comment]);
+    $stmt->bind_param("iisi", $reviewer_id, $target_id, $rateType, $rating);
+    $stmt->execute();
+    $stmt->close();
 
-    // recalc overall rating for that user and store in users.overall_rating if you have it
-    $avgStmt = $pdo->prepare("
-        SELECT AVG(rating) AS avg_rating
-        FROM user_reviews
-        WHERE target_id = ?
+    // 2) Recompute average rating for this user
+    $avgStmt = $conn->prepare("
+        SELECT AVG(score) AS avg_score
+        FROM Rates
+        WHERE user_id = ? AND type = ?
     ");
-    $avgStmt->execute([$target_id]);
-    $avgRow = $avgStmt->fetch(PDO::FETCH_ASSOC);
-    $avg = $avgRow && $avgRow['avg_rating'] ? floatval($avgRow['avg_rating']) : 0;
+    $avgStmt->bind_param("is", $target_id, $rateType);
+    $avgStmt->execute();
+    $avgResult = $avgStmt->get_result();
+    $avgRow = $avgResult->fetch_assoc();
+    $avgStmt->close();
 
-    $update = $pdo->prepare("
-        UPDATE users SET overall_rating = ? WHERE user_id = ?
+    $avg = ($avgRow && $avgRow['avg_score'] !== null)
+        ? (float)$avgRow['avg_score']
+        : 0.0;
+
+    // 3) Update User.overall_rating
+    $update = $conn->prepare("
+        UPDATE User
+        SET overall_rating = ?
+        WHERE user_id = ?
     ");
-    $update->execute([$avg, $target_id]);
+    $update->bind_param("di", $avg, $target_id);
+    $update->execute();
+    $update->close();
 
     echo json_encode([
-        "status" => "success",
-        "message" => "Review added.",
+        "status"     => "success",
+        "message"    => "Rating saved.",
         "avg_rating" => $avg
     ]);
 } catch (Exception $e) {
-    echo json_encode(["status" => "error", "message" => "Database error."]);
+    echo json_encode([
+        "status"  => "error",
+        "message" => "Database error."
+    ]);
 }
+
+$conn->close();
