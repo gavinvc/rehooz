@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
 const API_BASE = "https://rehooz-app-491933218528.us-east4.run.app/backend";
@@ -18,7 +18,7 @@ export default function UserProfile() {
   const { id } = useParams(); // id of the user being viewed
   const navigate = useNavigate();
 
-  const [viewer, setViewer] = useState(null);       // logged-in user
+  const [viewer, setViewer] = useState(null); // logged-in user
   const [targetUser, setTargetUser] = useState(null); // user being viewed
   const [avgRating, setAvgRating] = useState(0);
   const [ratings, setRatings] = useState([]);
@@ -26,6 +26,7 @@ export default function UserProfile() {
   const [submitting, setSubmitting] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [successMsg, setSuccessMsg] = useState("");
 
   // 1) Load logged-in user from localStorage
   useEffect(() => {
@@ -55,6 +56,7 @@ export default function UserProfile() {
       try {
         setLoading(true);
         setError("");
+        setSuccessMsg("");
 
         // --- basic user info ---
         const userRes = await fetch(`${API_BASE}/get_user.php?id=${id}`);
@@ -67,7 +69,6 @@ export default function UserProfile() {
         }
 
         setTargetUser(userData.user);
-        // use overall_rating from User as initial value
         setAvgRating(parseFloat(userData.user.overall_rating) || 0);
 
         // --- ratings from backend (using Rates table) ---
@@ -96,13 +97,6 @@ export default function UserProfile() {
     fetchAll();
   }, [id]);
 
-  // 3) Determine if the viewer already rated this user
-  const viewerRating = useMemo(() => {
-    if (!viewer) return null;
-    const viewerId = viewer.user_id ?? viewer.id;
-    return ratings.find((r) => String(r.rater_id) === String(viewerId)) || null;
-  }, [viewer, ratings]);
-
   const isOwnProfile =
     viewer && String(viewer.user_id ?? viewer.id) === String(id);
 
@@ -130,6 +124,7 @@ export default function UserProfile() {
     try {
       setSubmitting(true);
       setError("");
+      setSuccessMsg("");
 
       const res = await fetch(`${API_BASE}/add_user_review.php`, {
         method: "POST",
@@ -148,6 +143,7 @@ export default function UserProfile() {
       }
 
       setNewRating(5);
+      setSuccessMsg("Rating submitted successfully.");
 
       // reload ratings after successful post
       const ratingsRes = await fetch(`${API_BASE}/get_user_reviews.php`, {
@@ -218,6 +214,9 @@ export default function UserProfile() {
         {error && (
           <p className="profile-message profile-message--error">{error}</p>
         )}
+        {successMsg && !error && (
+          <p className="profile-message">{successMsg}</p>
+        )}
 
         {/* About This User */}
         <section className="profile-section">
@@ -242,42 +241,9 @@ export default function UserProfile() {
           <p className="profile-desc-box">
             {targetUser.profile_desc || "No description yet."}
           </p>
-
-          {viewerRating && (
-            <p className="profile-message">
-              You rated this user {Number(viewerRating.score).toFixed(1)} / 5{" "}
-              <StarRating value={viewerRating.score} />.
-            </p>
-          )}
         </section>
 
-        {/* Ratings list */}
-        <section className="profile-section">
-          <h3 className="profile-section-title">User Ratings</h3>
-
-          {ratings.length === 0 ? (
-            <p className="profile-empty">
-              No ratings yet. Be the first to rate this user!
-            </p>
-          ) : (
-            <ul className="ratings-list">
-              {ratings.map((r) => (
-                <li
-                  key={`${r.rater_id}-${r.score}-${r.rater_username}`}
-                  className="rating-card"
-                >
-                  <div className="rating-header">
-                    <span className="rating-author">@{r.rater_username}</span>
-                    <span className="rating-score">
-                      {Number(r.score).toFixed(1)} / 5{" "}
-                      <StarRating value={r.score} />
-                    </span>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </section>
+        
 
         {/* Leave a Rating (only if viewing someone else) */}
         {viewer && !isOwnProfile && (

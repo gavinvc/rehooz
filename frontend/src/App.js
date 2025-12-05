@@ -14,6 +14,7 @@ import Connect from "./pages/Connect";
 import Listing from "./pages/Listing";
 import Login from "./pages/login";
 import UserProfile from "./pages/UserProfile";
+import MyRatingsPage from "./pages/MyRatingsPage";
 
 function PrivateRoute({ children }) {
   const user = localStorage.getItem("user");
@@ -163,6 +164,7 @@ function App() {
             }
           />
           <Route path="/user/:id" element={<UserProfile />} />
+           <Route path="/profile/ratings" element={<MyRatingsPage />} />
         </Routes>
 
         <footer className="App-footer">

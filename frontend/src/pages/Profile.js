@@ -220,12 +220,13 @@
 // }
 // src/pages/Profile.js
 
+// src/pages/Profile.js
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
-const API_BASE =
-  "https://rehooz-app-491933218528.us-east4.run.app/backend";
+const API_BASE = "https://rehooz-app-491933218528.us-east4.run.app/backend";
 
+// Simple star display component
 function StarRating({ value }) {
   const rounded = Math.round(Number(value) || 0);
   const full = Math.min(Math.max(rounded, 0), 5);
@@ -235,84 +236,53 @@ function StarRating({ value }) {
     </span>
   );
 }
+
 export default function Profile() {
   const [user, setUser] = useState(null);
   const [desc, setDesc] = useState("");
-  const [rating, setRating] = useState(0); // overall rating about this user
+  const [avgRating, setAvgRating] = useState(0);
+
   const [passwords, setPasswords] = useState({
     current: "",
     new: "",
     confirm: "",
   });
+
   const [message, setMessage] = useState("");
   const [editing, setEditing] = useState(false);
   const [checked, setChecked] = useState(false);
-  const [avgRating, setAvgRating] = useState(0);
-  const [ratings, setRatings] = useState([]);
-  const [ratingsError, setRatingsError] = useState("");
+
   const navigate = useNavigate();
 
   useEffect(() => {
-    const storedUserRaw = localStorage.getItem("user");
+    const raw = localStorage.getItem("user");
     let storedUser = null;
 
     try {
-      storedUser = storedUserRaw ? JSON.parse(storedUserRaw) : null;
-    } catch (err) {
-      console.warn("Malformed user in localStorage, removing");
+      storedUser = raw ? JSON.parse(raw) : null;
+    } catch {
       localStorage.removeItem("user");
       storedUser = null;
     }
 
-    const authToken = localStorage.getItem("authToken");
-    const isLoggedIn = Boolean(authToken || (storedUser && storedUser.user_id));
-
-    if (!isLoggedIn) {
-      navigate("/");
-      return;
-    }
-
-    // if (storedUser) {
-    //   setUser(storedUser);
-     if (!storedUser) {
+    if (!storedUser) {
       navigate("/");
       return;
     }
 
     setUser(storedUser);
 
-      // 1) Basic profile info
-      fetch(`${API_BASE}/get_user.php?id=${storedUser.user_id}`)
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.status === "success") {
-            setDesc(data.user.profile_desc || "");
-            setRating(parseFloat(data.user.overall_rating) || 0);
-          }
-        })
-        .catch(() => {
-          // fail silently; page still works
-        });
-
-      // 2) Load ratings about this user
-      fetch(`${API_BASE}/get_user_reviews.php`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ target_id: storedUser.user_id }),
-      })
+    // Load basic profile info (including overall_rating)
+    fetch(`${API_BASE}/get_user.php?id=${storedUser.user_id}`)
       .then((res) => res.json())
       .then((data) => {
         if (data.status === "success") {
-          setRatings(data.ratings || []);
-          if (typeof data.avg_rating === "number") {
-            setAvgRating(data.avg_rating);
-          }
-        } else {
-          setRatingsError(data.message || "Could not load your ratings.");
+          setDesc(data.user.profile_desc || "");
+          setAvgRating(parseFloat(data.user.overall_rating) || 0);
         }
       })
       .catch(() => {
-        setRatingsError("Could not load your ratings.");
+        // ignore; page still works
       });
 
     setChecked(true);
@@ -356,6 +326,10 @@ export default function Profile() {
     setPasswords({ current: "", new: "", confirm: "" });
   };
 
+  const goToRatingsPage = () => {
+    navigate("/profile/ratings");
+  };
+
   if (!checked) return null;
 
   return (
@@ -374,11 +348,18 @@ export default function Profile() {
 
           <div className="profile-row">
             <span className="profile-label">Overall Rating</span>
-            <span className="profile-value">
+            <button
+              type="button"
+              className="profile-value profile-rating-clickable"
+              onClick={goToRatingsPage}
+            >
               {avgRating.toFixed(1)} / 5.0{" "}
               <StarRating value={avgRating} />
-            </span>
+            </button>
           </div>
+          <p className="profile-hint">
+            Click your overall rating to view detailed ratings.
+          </p>
         </section>
 
         {/* Description */}
@@ -392,10 +373,8 @@ export default function Profile() {
               </p>
               <button
                 className="profile-btn primary"
+                style={{ marginTop: "10px" }}
                 onClick={() => setEditing(true)}
-                style={{
-                  marginTop: "10px",
-                }}
               >
                 Edit Profile
               </button>
@@ -427,7 +406,7 @@ export default function Profile() {
           )}
         </section>
 
-        {/* Password change (only when editing) */}
+        {/* Change Password (when editing) */}
         {editing && (
           <section className="profile-section">
             <h3 className="profile-section-title">Change Password</h3>
@@ -468,7 +447,6 @@ export default function Profile() {
             </form>
           </section>
         )}
-
 
         {message && <p className="profile-message">{message}</p>}
       </div>
