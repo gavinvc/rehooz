@@ -187,10 +187,6 @@ export default function Connect({ user: propUser }) {
                         </button>
                         {u.city && <span className="connect-city">· {u.city}</span>}
                       
-                        <span className="connect-username">{u.username}</span>
-                        {u.city && (
-                          <span className="connect-city">· {u.city}</span>
-                        )}
                       </div>
                       <button
                         type="button"

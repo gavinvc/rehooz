@@ -245,8 +245,9 @@ export default function UserProfile() {
 
         
 
-        {/* Leave a Rating (only if viewing someone else) */}
-        {viewer && !isOwnProfile && (
+        {/* Leave a Rating (only if viewing someone else and only if you haven
+        t left one yet) */}
+        {viewer && !isOwnProfile && !viewerRating && (
           <section className="profile-section">
             <h3 className="profile-section-title">Leave a Rating</h3>
 
