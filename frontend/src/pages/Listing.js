@@ -30,6 +30,7 @@ export default function Listing() {
 		return [...accepted, ...pending];
 	}, [listingOffersAccepted, listingOffersPending]);
 	const hasAcceptedOffer = listingOffersAccepted.length > 0;
+	const offersClosed = hasAcceptedOffer || Boolean(listing?.has_accepted_offer);
 
 	const formatMoney = useCallback((value) => {
 		const numeric = Number(value);
@@ -220,8 +221,21 @@ export default function Listing() {
 		return () => controller.abort();
 	}, [listing?.listing_id, fetchListingOffers]);
 
+	useEffect(() => {
+		if (hasAcceptedOffer) {
+			setListing((prev) => {
+				if (!prev || prev.has_accepted_offer) return prev;
+				return { ...prev, has_accepted_offer: true };
+			});
+		}
+	}, [hasAcceptedOffer]);
+
 	const openEditModal = (listingToEdit) => {
 		if (String(listingToEdit.seller_id) !== String(userId)) return;
+		if (hasAcceptedOffer) {
+			alert("This listing can no longer be edited because an offer has already been accepted.");
+			return;
+		}
 
 		setEditingListing(listingToEdit);
 		setForm({
@@ -284,6 +298,10 @@ export default function Listing() {
 	};
 
 	const handleMakeOffer = async () => {
+		if (offersClosed) {
+			setOfferMessage("Offers for this listing are closed because one has already been accepted.");
+			return;
+		}
 		if(!userId){
 			setOfferMessage("You must be logged in to make an offer.");
 			return;
@@ -320,6 +338,18 @@ export default function Listing() {
 			console.error("Failed to make offer:", err);
 			setOfferMessage("Unable to make offer. Please try again.");
 		}
+	};
+
+	const handleOpenOfferModal = () => {
+		if (!listing) return;
+		if (offersClosed) {
+			alert("Offers are closed for this listing because one has already been accepted.");
+			return;
+		}
+		setCurrentListingId(listing.listing_id);
+		setIsOfferModalOpen(true);
+		setOfferMessage("");
+		setOfferAmount("");
 	};
 
 	const handleAcceptOffer = async (offerId) => {
@@ -426,7 +456,7 @@ export default function Listing() {
 	return (
 		<main className="page-content listing-detail-page">
 			<div className="listing-detail-card">
-				<div className="listing-detail-header">
+					<div className="listing-detail-header">
 					<div>
 						<Link to="/browse" className="listing-back-link">
 							← Back to Browse
@@ -436,31 +466,49 @@ export default function Listing() {
 							<p className="listing-detail-id">Listing #{listing.listing_id}</p>
 						)}
 					</div>
-					<div className="listing-header-actions">
+						<div className="listing-header-actions">
 						<button
 							type="button"
 							className="Goto-listing place-offer-btn"
-							onClick={() => {
-								setCurrentListingId(listing.listing_id);
-								setIsOfferModalOpen(true);
-								setOfferMessage("");
-								setOfferAmount("");
-							}}
-							disabled={!listing}
+								onClick={handleOpenOfferModal}
+								disabled={!listing || offersClosed}
+								title={
+									offersClosed
+										? "Offers are closed once one has been accepted"
+										: undefined
+								}
 						>
-							Place Offer
+								{offersClosed ? "Offers Closed" : "Place Offer"}
 						</button>
-						{isOwner && listing && (
-							<button
-								type="button"
-								className="Edit-listing"
-								onClick={() => openEditModal(listing)}
-							>
-								Edit Listing
-							</button>
-						)}
+							{isOwner && listing && (
+								<button
+									type="button"
+									className="Edit-listing"
+									onClick={() => openEditModal(listing)}
+									disabled={hasAcceptedOffer}
+									title={
+										hasAcceptedOffer
+											? "This listing cannot be edited after accepting an offer"
+											: undefined
+									}
+								>
+									{hasAcceptedOffer ? "Editing Locked" : "Edit Listing"}
+								</button>
+							)}
 					</div>
 				</div>
+
+					{isOwner && hasAcceptedOffer && (
+						<p className="listing-edit-lock-hint">
+							An accepted offer locks this listing from further edits.
+						</p>
+					)}
+
+					{offersClosed && (
+						<p className="listing-offer-lock-hint">
+							This listing already has an accepted offer, so new offers are disabled.
+						</p>
+					)}
 
 				{isModalOpen && (
 					<div className="modal-overlay" role="dialog" aria-modal="true">

@@ -17,7 +17,14 @@ if (!$user_id) {
 }
 
 try {
-    $sql = "SELECT * FROM Listing WHERE seller_id = ?";
+    $sql = "SELECT L.*, EXISTS (
+                SELECT 1
+                FROM Accepts A
+                INNER JOIN Offer O2 ON O2.offer_id = A.offer_id
+                WHERE O2.listing_id = L.listing_id
+            ) AS has_accepted_offer
+            FROM Listing L
+            WHERE L.seller_id = ?";
     $stmt = $conn->prepare($sql);
 
     if (!$stmt) {
@@ -32,6 +39,7 @@ try {
     while ($row = $result->fetch_assoc()) {
         // Optionally sanitize or format values before returning
         $row['price'] = floatval($row['price']);
+        $row['has_accepted_offer'] = (bool)$row['has_accepted_offer'];
         $listings[] = $row;
     }
 

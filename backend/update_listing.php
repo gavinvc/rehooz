@@ -40,6 +40,30 @@ if (!$seller_id || !$listing_id || $name === '' || $price <= 0) {
     exit;
 }
 
+// Prevent edits if the listing already has an accepted offer
+$acceptedSql = "SELECT 1 FROM Accepts A JOIN Offer O ON A.offer_id = O.offer_id WHERE O.listing_id = ? LIMIT 1";
+$acceptedStmt = $conn->prepare($acceptedSql);
+
+if (!$acceptedStmt) {
+    echo json_encode(["status" => "error", "message" => "Unable to verify listing status"]);
+    exit;
+}
+
+$acceptedStmt->bind_param("i", $listing_id);
+$acceptedStmt->execute();
+$acceptedStmt->store_result();
+
+if ($acceptedStmt->num_rows > 0) {
+    $acceptedStmt->close();
+    echo json_encode([
+        "status" => "error",
+        "message" => "This listing can no longer be edited because an offer has already been accepted."
+    ]);
+    exit;
+}
+
+$acceptedStmt->close();
+
 try {
     $sql = "UPDATE Listing
             SET name = ?, price = ?, description = ?, photo = ?, location = ?

@@ -25,6 +25,25 @@ try {
         throw new Exception("Missing required fields.");
     }
 
+    // block new offers if one has already been accepted for this listing
+    $acceptedSql = "SELECT 1 FROM Accepts A INNER JOIN Offer O2 ON O2.offer_id = A.offer_id WHERE O2.listing_id = ? LIMIT 1";
+    $acceptedStmt = $conn->prepare($acceptedSql);
+    if (!$acceptedStmt) throw new Exception("Prepare failed: " . $conn->error);
+    $acceptedStmt->bind_param("i", $listing_id);
+    $acceptedStmt->execute();
+    $acceptedStmt->store_result();
+
+    if ($acceptedStmt->num_rows > 0) {
+        $acceptedStmt->close();
+        echo json_encode([
+            "status" => "error",
+            "message" => "Offers are closed for this listing because one has already been accepted."
+        ]);
+        exit;
+    }
+
+    $acceptedStmt->close();
+
     // ---- 1. Insert into Offer ----
     $sql_offer = "
         INSERT INTO Offer (listing_id, buyer_id, monetary_amount, date, is_accepted)

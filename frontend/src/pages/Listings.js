@@ -105,6 +105,11 @@ export default function Listings() {
     // Only allow editing if it belongs to this user
     if (String(listing.seller_id) !== String(userId)) return;
 
+    if (listing.has_accepted_offer) {
+      alert("This listing can no longer be edited because an offer has been accepted.");
+      return;
+    }
+
     setEditingListing(listing); // Edit mode
     setForm({
       name: listing.name || "",
@@ -332,8 +337,14 @@ export default function Listings() {
                       <button
                         className="Edit-listing"
                         onClick={() => openEditModal(item)}
+                        disabled={Boolean(item.has_accepted_offer)}
+                        title={
+                          item.has_accepted_offer
+                            ? "This listing cannot be edited after accepting an offer"
+                            : undefined
+                        }
                       >
-                        Edit
+                        {item.has_accepted_offer ? "Locked" : "Edit"}
                       </button>
                       <button
                         className="Delete-listing"

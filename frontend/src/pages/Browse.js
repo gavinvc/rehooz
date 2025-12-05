@@ -24,6 +24,7 @@ export default function Browse() {
   const [isOfferModalOpen, setIsOfferModalOpen] = useState(false);
   const [offerAmount, setOfferAmount] = useState("");
   const [currentListingId, setCurrentListingId] = useState(null);
+  const [currentListingLocked, setCurrentListingLocked] = useState(false);
   const [offerMessage, setOfferMessage] = useState("");
 
   const user = useMemo(() => {
@@ -210,6 +211,7 @@ export default function Browse() {
   const renderListingCard = (item) => {
     const id = item.listing_id;
     const isFollowed = followed.includes(id);
+    const offersClosed = Boolean(item.has_accepted_offer);
 
     return (
       <div key={id} className="Listing-component">
@@ -227,18 +229,31 @@ export default function Browse() {
           <Link className="view-listing-link" to={`/listing/${id}`}>
             View listing
           </Link>
-          {user &&(
+          {user && (
             <button
               className="Goto-listing"
+              disabled={offersClosed}
+              title={
+                offersClosed
+                  ? "Offers are closed for this listing because one has already been accepted"
+                  : undefined
+              }
               onClick={() => {
+                const locked = Boolean(item.has_accepted_offer);
+                setCurrentListingLocked(locked);
+                if (locked) {
+                  alert("Offers are closed for this listing because one has already been accepted.");
+                  return;
+                }
+                setCurrentListingLocked(false);
                 setCurrentListingId(id);
                 setIsOfferModalOpen(true);
                 setOfferMessage("");
                 setOfferAmount("");
               }}
-              >
-              Make Offer  
-              </button>
+            >
+              {offersClosed ? "Offers Closed" : "Make Offer"}
+            </button>
           )}
           {user ? (
             isFollowed ? (
@@ -332,6 +347,10 @@ export default function Browse() {
 
   //offer handlers
   const handleMakeOffer = async()=>{
+    if(currentListingLocked){
+      setOfferMessage("Offers are closed for this listing because one has already been accepted.");
+      return;
+    }
     if(!userId){
       setOfferMessage("You must be logged in to make an offer.");
       return;
@@ -360,6 +379,7 @@ export default function Browse() {
         setOfferAmount("");
         setTimeout(() => {
           setIsOfferModalOpen(false);
+          setCurrentListingLocked(false);
           setOfferMessage("");
         }, 800);
       }
@@ -380,6 +400,7 @@ export default function Browse() {
             onClick={() => {
               setIsModalOpen(true);
               setMessage("");
+              setCurrentListingLocked(false);
             }}
           >
             Add Listing
@@ -635,7 +656,10 @@ export default function Browse() {
                 <h4 style={{ margin: 0 }}>Make an Offer</h4>
                 <button
                   type="button"
-                  onClick={() => setIsOfferModalOpen(false)}
+                    onClick={() => {
+                      setIsOfferModalOpen(false);
+                      setCurrentListingLocked(false);
+                    }}
                   className="modal-close-btn"
                 >
               ×
