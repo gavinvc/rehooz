@@ -28,6 +28,13 @@ export default function UserProfile() {
   const [error, setError] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
 
+  const viewerRating = useMemo(() => {
+    if (!viewer) return null;
+    const viewerId = viewer.user_id ?? viewer.id;
+    return ratings.find((r) => String(r.rater_id) === String(viewerId)) || null;
+    }, [viewer, ratings]);
+
+
   // 1) Load logged-in user from localStorage
   useEffect(() => {
     const storedUserRaw = localStorage.getItem("user");
