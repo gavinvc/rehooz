@@ -6,6 +6,10 @@ const API_BASE_URL =
 
 export default function Connect({ user: propUser }) {
   const navigate = useNavigate();
+  const goToProfile = (id) => {
+    navigate(`/user/${id}`);
+  };
+
 
   // logged-in user from props or localStorage
   const user = propUser || JSON.parse(localStorage.getItem("user") || "null");
@@ -174,6 +178,15 @@ export default function Connect({ user: propUser }) {
                   return (
                     <li key={u.user_id} className="connect-result-item">
                       <div className="connect-result-text">
+                        <button
+                          type="button"
+                          className="connect-username-button"
+                          onClick={() => goToProfile(u.user_id)}
+                        >
+                          {u.username}
+                        </button>
+                        {u.city && <span className="connect-city">· {u.city}</span>}
+                      
                         <span className="connect-username">{u.username}</span>
                         {u.city && (
                           <span className="connect-city">· {u.city}</span>
@@ -210,7 +223,13 @@ export default function Connect({ user: propUser }) {
               <ul>
                 {following.map((u) => (
                   <li key={u.user_id} className="connect-name-row">
-                    <span className="connect-username">{u.username}</span>
+                    <button
+                      type="button"
+                      className="connect-username-button"
+                      onClick={() => goToProfile(u.user_id)}
+                    >
+                      {u.username}
+                    </button>
                     {u.city && (
                       <span className="connect-city">· {u.city}</span>
                     )}
