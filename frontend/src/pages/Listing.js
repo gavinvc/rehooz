@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import rehooz_square from "../rehooz-square.png";
 
@@ -17,6 +17,24 @@ export default function Listing() {
 	const [message, setMessage] = useState("");
 	const [isModalOpen, setIsModalOpen] = useState(false);
 	const [editingListing, setEditingListing] = useState(null);
+	const [isOfferModalOpen, setIsOfferModalOpen] = useState(false);
+	const [offerAmount, setOfferAmount] = useState("");
+	const [currentListingId, setCurrentListingId] = useState(null);
+	const [offerMessage, setOfferMessage] = useState("");
+	const [listingOffersPending, setListingOffersPending] = useState([]);
+	const [listingOffersAccepted, setListingOffersAccepted] = useState([]);
+	const totalListingOffers = listingOffersPending.length + listingOffersAccepted.length;
+	const listingOffers = useMemo(() => {
+		const accepted = [...listingOffersAccepted];
+		const pending = [...listingOffersPending];
+		return [...accepted, ...pending];
+	}, [listingOffersAccepted, listingOffersPending]);
+	const hasAcceptedOffer = listingOffersAccepted.length > 0;
+
+	const formatMoney = useCallback((value) => {
+		const numeric = Number(value);
+		return Number.isFinite(numeric) ? numeric.toFixed(2) : value;
+	}, []);
 
 	const user = useMemo(() => {
 		const stored = localStorage.getItem("user");
@@ -160,6 +178,48 @@ export default function Listing() {
 		return () => controller.abort();
 	}, [listing]);
 
+	const fetchListingOffers = useCallback(
+		async (signal) => {
+			if (!listing || !listing.listing_id) {
+				setListingOffersPending([]);
+				setListingOffersAccepted([]);
+				return;
+			}
+
+			try {
+				const fetchOptions = signal ? { signal } : {};
+				const res = await fetch(
+					`${API_BASE_URL}/get_listing_offers.php?listing_id=${listing.listing_id}`,
+					fetchOptions
+				);
+				if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+				const data = await res.json();
+				if (data.status === "success") {
+					setListingOffersPending(data.pending_offers || []);
+					setListingOffersAccepted(data.accepted_offers || []);
+				} else {
+					setListingOffersPending([]);
+					setListingOffersAccepted([]);
+				}
+			} catch (err) {
+				if (err?.name !== "AbortError") {
+					console.error("Failed to load listing offers", err);
+				}
+				setListingOffersPending([]);
+				setListingOffersAccepted([]);
+			}
+		},
+		[listing?.listing_id]
+	);
+
+	useEffect(() => {
+		if (!listing || !listing.listing_id) return;
+
+		const controller = new AbortController();
+		fetchListingOffers(controller.signal);
+		return () => controller.abort();
+	}, [listing?.listing_id, fetchListingOffers]);
+
 	const openEditModal = (listingToEdit) => {
 		if (String(listingToEdit.seller_id) !== String(userId)) return;
 
@@ -220,6 +280,70 @@ export default function Listing() {
 
 		if (editingListing) {
 			await updateListing();
+		}
+	};
+
+	const handleMakeOffer = async () => {
+		if(!userId){
+			setOfferMessage("You must be logged in to make an offer.");
+			return;
+		}
+		if(!offerAmount || isNaN(offerAmount) || offerAmount <= 0){
+			setOfferMessage("Please enter a valid offer amount.");
+			return;
+		}
+
+		try{
+			const res = await fetch(
+				"https://rehooz-app-491933218528.us-east4.run.app/backend/make_offer.php",
+				{
+					method: "POST",
+					headers: { "Content-Type": "application/json" },
+					body: JSON.stringify({
+						user_id: userId,
+						listing_id: currentListingId,
+						monetary_amount: parseFloat(offerAmount)
+					}),
+				}
+			);
+			const data = await res.json();
+			setOfferMessage(data.message);
+			if(data.status === "success"){
+				setOfferAmount("");
+				await fetchListingOffers();
+				setTimeout(() => {
+					setIsOfferModalOpen(false);
+					setOfferMessage("");
+				}, 800);
+			}
+		} catch(err){
+			console.error("Failed to make offer:", err);
+			setOfferMessage("Unable to make offer. Please try again.");
+		}
+	};
+
+	const handleAcceptOffer = async (offerId) => {
+		const sellerOwnsListing = listing && userId && String(listing.seller_id) === String(userId);
+		if (!sellerOwnsListing) {
+			alert("Only the seller can accept offers for this listing.");
+			return;
+		}
+		if (!offerId) return;
+
+		try {
+			const res = await fetch(`${API_BASE_URL}/accept_offer.php`, {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ offer_id: offerId, user_id: userId }),
+			});
+			const data = await res.json();
+			alert(data.message || "Request completed.");
+			if (data.status === "success") {
+				await fetchListingOffers();
+			}
+		} catch (err) {
+			console.error("Failed to accept offer:", err);
+			alert("Unable to accept offer right now. Please try again.");
 		}
 	};
 
@@ -299,31 +423,6 @@ export default function Listing() {
 		return String(listing.seller_id) === String(user.user_id);
 	}, [user, listing]);
 
-	const [listingOffers, setListingOffers] = useState([]);
-
-useEffect(() => {
-	if (!listing || !listing.listing_id) return; // wait for listing to load
-
-	async function loadOffers() {
-		try {
-			const res = await fetch(
-				`${API_BASE_URL}/get_all_offers.php?listing_id=${listing.listing_id}`
-			);
-			const data = await res.json();
-			if (data.status === "success") {
-				setListingOffers(data.offers);
-			} else {
-				setListingOffers([]);
-			}
-		} catch (err) {
-			console.error("Error fetching offers", err);
-			setListingOffers([]);
-		}
-	}
-
-	loadOffers();
-}, [listing]);
-
 	return (
 		<main className="page-content listing-detail-page">
 			<div className="listing-detail-card">
@@ -341,7 +440,12 @@ useEffect(() => {
 						<button
 							type="button"
 							className="Goto-listing place-offer-btn"
-							onClick={() => alert("Offer placement coming soon!")}
+							onClick={() => {
+								setCurrentListingId(listing.listing_id);
+								setIsOfferModalOpen(true);
+								setOfferMessage("");
+								setOfferAmount("");
+							}}
 							disabled={!listing}
 						>
 							Place Offer
@@ -420,6 +524,47 @@ useEffect(() => {
 					</div>
 				)}
 
+				{isOfferModalOpen && (
+					<div className="modal-overlay" role="dialog" aria-modal="true">
+						<div className="home-card modal-card">
+							<div className="modal-close-row">
+								<h4 style={{ margin: 0 }}>Make an Offer</h4>
+								<button
+									type="button"
+									onClick={() => setIsOfferModalOpen(false)}
+									className="modal-close-btn"
+								>
+								×
+								</button>
+							</div>
+							<img src={rehooz_square} alt="Rehooz" className="home-logo modal-logo" />
+							<div style={{ textAlign: "center" }}>
+								<input
+									type="number"
+									placeholder="Offer Amount ($)"
+									value={offerAmount}
+									onChange={(e) => setOfferAmount(e.target.value)}
+									required
+								/>
+
+								<button
+									className="modal-submit-btn"
+									onClick={handleMakeOffer}
+									style={{ marginTop: "12px" }}
+								>
+									Submit Offer
+								</button>
+
+								{offerMessage && (
+									<p className="modal-message" style={{ marginTop: "10px" }}>
+										{offerMessage}
+									</p>
+								)}
+							</div>
+						</div>
+					</div>
+				)}
+
 				{loading && <p>Loading listing…</p>}
 				{error && <p className="listing-error">{error}</p>}
 
@@ -488,22 +633,56 @@ useEffect(() => {
 							<div className="listing-offers-header">
 								<h3>Offers</h3>
 								<span className="listing-offers-count">
-      								{listingOffers.length} offer{listingOffers.length !== 1 ? "s" : ""}
-    							</span>
-  							</div>
+		      								{totalListingOffers} offer{totalListingOffers !== 1 ? "s" : ""}
+		    							</span>
+		  						</div>
 
-  							{listingOffers.length === 0 ? (
-    							<p className="listing-offers-empty">No offers yet.</p>
-  							) : (
-    							<ul className="listing-offers-list">
-      								{listingOffers.map((offer) => (
-        							<li key={offer.offer_id} className="listing-offer-item">
-          								<strong>{offer.buyer_username}</strong> offered{" "}
-          								<span className="offer-amount">${offer.monetary_amount}</span>
-        							</li>
-      								))}
-    							</ul>
- 							 )}
+		  						{listingOffers.length === 0 ? (
+		    							<p className="listing-offers-empty">No offers have been placed yet.</p>
+		  						) : (
+		    							<div className="Listings-column" style={{ width: "100%" }}>
+		      								<div className="scroll-box">
+		        								{listingOffers.map((offer) => {
+		          									const isAccepted = offer.is_accepted === 1 || offer.is_accepted === "1";
+		          									return (
+		            								<div
+		              								key={offer.offer_id}
+		              								className="Listing-component"
+		              								style={
+		                								isAccepted
+		                  								? { border: "2px solid #23c483", background: "rgba(35,196,131,0.12)" }
+		                  								: undefined
+		              								}
+		            								>
+		              								<div className="listing-content">
+		                								<h4>{offer.buyer_username || `Buyer #${offer.buyer_id}`}</h4>
+		                								<p>
+		                  								<strong>Offer:</strong> ${formatMoney(offer.monetary_amount)}
+		                								</p>
+		                								{offer.date && <p>Date: {offer.date}</p>}
+		                								{isAccepted && (
+		                  								<p style={{ color: "#23c483", fontWeight: "bold", marginTop: "6px" }}>
+		                    								Accepted
+		                  								</p>
+		                								)}
+		              								</div>
+
+		              								{isOwner && !isAccepted && !hasAcceptedOffer && (
+		                								<div className="Component-column listing-actions">
+		                  								<button
+		                    								className="Goto-listing"
+		                    								onClick={() => handleAcceptOffer(offer.offer_id)}
+		                  								>
+		                    								Accept Offer
+		                  								</button>
+		                								</div>
+		              								)}
+		            								</div>
+		          								);
+		        								})}
+		      								</div>
+		    							</div>
+		  						)}
 						</section>
 					</>
 				)}
