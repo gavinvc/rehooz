@@ -94,8 +94,6 @@ export default function Listing() {
 		return Number.isFinite(value) ? value.toFixed(2) : listing.price;
 	}, [listing]);
 
-	const photoSrc = listing?.photo ? listing.photo : rehooz_square;
-
 	useEffect(() => {
 		if (!listing || !listing.listing_id || !listing.seller_id) {
 			setSellerDetails(null);
@@ -620,7 +618,9 @@ export default function Listing() {
 					<>
 						<div className="listing-detail-body">
 							<div className="listing-photo-panel">
-								<img src={photoSrc} alt={listing.name} />
+								<div className="listing-photo-placeholder" aria-label="Listing image placeholder">
+									<p>Image support is a future work feature.</p>
+								</div>
 							</div>
 
 							<div className="listing-info-panel">

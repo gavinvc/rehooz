@@ -725,6 +725,27 @@ main {
   border-radius: 18px;
 }
 
+.listing-photo-placeholder {
+  width: 100%;
+  max-height: 380px;
+  min-height: 260px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  border-radius: 18px;
+  border: 2px dashed #cbd5f5;
+  background: linear-gradient(135deg, #eef2ff, #f8fafc);
+  color: #475569;
+  font-weight: 600;
+  padding: 24px;
+  box-sizing: border-box;
+}
+
+.listing-photo-placeholder p {
+  margin: 0;
+}
+
 .listing-info-panel {
   flex: 1 1 320px;
   display: flex;
